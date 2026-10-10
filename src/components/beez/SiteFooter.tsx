@@ -8,7 +8,6 @@ export default function SiteFooter() {
           <h4>Beez</h4>
           <a href="#/">Home</a>
           <a href="#/vision">Our vision</a>
-          <a href="#/trust">Safe by design</a>
         </div>
         <div>
           <h4>Product</h4>
@@ -17,7 +16,6 @@ export default function SiteFooter() {
             Launch app
           </a>
           <a href="#/features">Features</a>
-          <a href="#/built-on">Built on what you use</a>
           <a href="#/faq">FAQ</a>
         </div>
         <div>

@@ -6,8 +6,6 @@ import OfferSection from "@/components/beez/OfferSection";
 import ProblemSection from "@/components/beez/ProblemSection";
 import VisionSection from "@/components/beez/VisionSection";
 import FeaturesSection from "@/components/beez/FeaturesSection";
-import TrustSection from "@/components/beez/TrustSection";
-import BuiltOnSection from "@/components/beez/BuiltOnSection";
 import FAQSection from "@/components/beez/FAQSection";
 import FinalCallToAction from "@/components/beez/FinalCallToAction";
 import SiteFooter from "@/components/beez/SiteFooter";
@@ -30,12 +28,16 @@ export const Route = createFileRoute("/")({
   component: App,
 });
 
-type Page = "home" | "offer" | "vision" | "features" | "faq" | "trust" | "built-on" | "problem";
-const pages: Page[] = ["home", "offer", "vision", "features", "faq", "trust", "built-on", "problem"];
+type Page = "home" | "offer" | "vision" | "features" | "faq" | "problem";
+const pages: Page[] = ["home", "offer", "vision", "features", "faq", "problem"];
 
 function currentPage(): Page {
   const h = window.location.hash;
   const page = h.startsWith("#/") ? h.slice(2) : h.slice(1);
+  if (page === "trust" || page === "built-on") {
+    window.history.replaceState(null, "", "#/features");
+    return "features";
+  }
   return pages.includes(page as Page) ? (page as Page) : "home";
 }
 
@@ -61,8 +63,6 @@ function App() {
         {page === "vision" && <VisionSection />}
         {page === "features" && <FeaturesSection />}
         {page === "faq" && <FAQSection />}
-        {page === "trust" && <TrustSection />}
-        {page === "built-on" && <BuiltOnSection />}
         {page === "problem" && (
           <>
             <FinalCallToAction />

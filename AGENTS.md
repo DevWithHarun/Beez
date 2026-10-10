@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Compose the Features page from the feature tabs, TrustSection, and BuiltOnSection as sibling sections; redirect retired hash addresses to Features so existing links still work.
