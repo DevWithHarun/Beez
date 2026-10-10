@@ -84,7 +84,7 @@ h2{font-size:clamp(26px,5vw,38px);line-height:1.15;margin:0 0 10px;letter-spacin
 .ck li{position:relative;padding:6px 0 6px 32px;color:var(--ink)}
 .ck li:before{content:"\2713";position:absolute;left:0;top:7px;width:20px;height:20px;border:2px solid var(--yd);border-radius:50%;color:var(--yd);font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center}
 .pimg{background:var(--ysoft);border-radius:18px;padding:16px;display:flex;justify-content:center}
-.pimg svg{width:100%;max-width:230px;height:auto}
+.pimg img{width:100%;max-width:320px;height:auto;border-radius:14px;display:block}
 .pimg .pf{fill:var(--card);stroke:var(--ink);stroke-width:2}
 .pimg .pg{fill:var(--line)}.pimg .py{fill:var(--y)}.pimg .pi{fill:var(--ink)}
 .pimg .pw{fill:var(--card);stroke:var(--line);stroke-width:1.5}
