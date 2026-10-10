@@ -415,12 +415,10 @@ html{scroll-padding-top:66px}
   .built-card,.built-card:nth-child(4){grid-column:auto;min-height:190px;padding:12px}
   .built-card.language-tool{grid-column:1 / -1}
   .built-card-top{height:67px}
-  .built-card-top>svg{width:58px;height:58px}
+  .built-card-top>img{height:67px}
   .built-card-top>.status-pill{top:-4px;right:-4px;padding:4px 6px;font-size:10px}
   .built-card h3{font-size:17px}
   .built-card p{font-size:14px}
-  .payment-brands span{width:30px;height:30px;font-size:15px}
-  .language-tool .built-card-top>svg{width:72px}
   .built-bottom-nav{flex-wrap:wrap;gap:14px;padding-bottom:10px}
   .merchant-problem{padding-top:35px}
   .problem-statement{margin-bottom:25px;padding-left:15px;border-left-width:4px;font-size:27px}
