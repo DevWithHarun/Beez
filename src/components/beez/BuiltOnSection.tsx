@@ -92,17 +92,6 @@ export default function BuiltOnSection() {
           </article>
         ))}
       </div>
-
-      <p className="section-target">
-        The target: every informal merchant, counted.
-      </p>
-
-      <div className="built-bottom-nav" aria-label="Section links">
-        <a href="#/offer">Offer</a>
-        <a href="#/vision">Vision</a>
-        <a href="#/features">Features</a>
-        <a href="#contact">Contact us</a>
-      </div>
     </section>
   );
 }

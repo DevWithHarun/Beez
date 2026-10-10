@@ -121,10 +121,6 @@ export default function TrustSection() {
           </article>
         ))}
       </div>
-
-      <p className="section-target">
-        The target: every informal merchant, counted.
-      </p>
     </section>
   );
 }
