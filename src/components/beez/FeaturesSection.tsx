@@ -1,6 +1,14 @@
 import { useState } from "react";
 import TrustSection from "./TrustSection";
 import BuiltOnSection from "./BuiltOnSection";
+import shopPageImg from "@/assets/features/shop-page.jpg";
+import voiceProductsImg from "@/assets/features/voice-products.jpg";
+import shopVideoImg from "@/assets/features/shop-video.jpg";
+import orderingImg from "@/assets/features/ordering.jpg";
+import mpesaImg from "@/assets/features/mpesa.jpg";
+import alertsImg from "@/assets/features/alerts.jpg";
+import deliveryImg from "@/assets/features/delivery.jpg";
+import recordsImg from "@/assets/features/records.jpg";
 
 export default function FeaturesSection() {
   const [activeTab, setActiveTab] = useState(0);
@@ -36,25 +44,7 @@ export default function FeaturesSection() {
       </ul>
     </div>
     <div className={"pimg"}>
-      <svg viewBox={"0 0 220 300"} role={"img"} aria-label={"Shop page with a share link"}>
-        <rect className={"pf"} x={"45"} y={"8"} width={"130"} height={"284"} rx={"20"}></rect>
-        <rect className={"pg"} x={"88"} y={"14"} width={"44"} height={"6"} rx={"3"}></rect>
-        <rect className={"py"} x={"55"} y={"28"} width={"110"} height={"30"} rx={"8"}></rect>
-        <text className={"st"} x={"66"} y={"48"}>{"Beez"}</text>
-        <circle className={"pg"} cx={"110"} cy={"84"} r={"14"}></circle>
-        <rect className={"pg"} x={"80"} y={"106"} width={"60"} height={"7"} rx={"3"}></rect>
-        <rect className={"pg"} x={"90"} y={"118"} width={"40"} height={"6"} rx={"3"}></rect>
-        <rect className={"pw"} x={"64"} y={"136"} width={"92"} height={"22"} rx={"11"}></rect>
-        <text className={"sm"} x={"110"} y={"150"} textAnchor={"middle"}>{"Share your link"}</text>
-        <rect className={"pi"} x={"80"} y={"195"} width={"7"} height={"7"}></rect>
-        <rect className={"pi"} x={"80"} y={"204"} width={"7"} height={"7"}></rect>
-        <rect className={"pi"} x={"98"} y={"195"} width={"7"} height={"7"}></rect>
-        <rect className={"pi"} x={"98"} y={"204"} width={"7"} height={"7"}></rect>
-        <rect className={"pi"} x={"107"} y={"195"} width={"7"} height={"7"}></rect>
-        <rect className={"pi"} x={"107"} y={"204"} width={"7"} height={"7"}></rect>
-        <rect className={"pi"} x={"125"} y={"195"} width={"7"} height={"7"}></rect>
-        <rect className={"pi"} x={"125"} y={"204"} width={"7"} height={"7"}></rect>
-      </svg>
+      <img src={shopPageImg} alt={"A vendor holding up her phone with her own shop page"} width={736} height={912} loading="lazy" />
     </div>
   </div>
   <div className={"tp"} role={"tabpanel"} id={"tp1"} aria-labelledby={"tab1"} hidden={activeTab !== 1}>
@@ -68,31 +58,7 @@ export default function FeaturesSection() {
       </ul>
     </div>
     <div className={"pimg"}>
-      <svg viewBox={"0 0 220 300"} role={"img"} aria-label={"Voice product list to confirm"}>
-        <rect className={"pf"} x={"45"} y={"8"} width={"130"} height={"284"} rx={"20"}></rect>
-        <rect className={"pg"} x={"88"} y={"14"} width={"44"} height={"6"} rx={"3"}></rect>
-        <circle className={"py"} cx={"110"} cy={"58"} r={"20"}></circle>
-        <rect className={"pi"} x={"106"} y={"48"} width={"8"} height={"14"} rx={"4"}></rect>
-        <rect className={"pi"} x={"97"} y={"68"} width={"26"} height={"2"}></rect>
-        <rect className={"py"} x={"78"} y={"92"} width={"5"} height={"8"} rx={"2"}></rect>
-        <rect className={"py"} x={"88"} y={"88"} width={"5"} height={"16"} rx={"2"}></rect>
-        <rect className={"py"} x={"98"} y={"84"} width={"5"} height={"24"} rx={"2"}></rect>
-        <rect className={"py"} x={"108"} y={"89"} width={"5"} height={"14"} rx={"2"}></rect>
-        <rect className={"py"} x={"118"} y={"86"} width={"5"} height={"20"} rx={"2"}></rect>
-        <rect className={"py"} x={"128"} y={"91"} width={"5"} height={"10"} rx={"2"}></rect>
-        <rect className={"py"} x={"138"} y={"93"} width={"5"} height={"6"} rx={"2"}></rect>
-        <rect className={"pw"} x={"62"} y={"116"} width={"96"} height={"22"} rx={"6"}></rect>
-        <text className={"sm"} x={"70"} y={"131"}>{"Dress"}</text>
-        <text className={"st"} x={"150"} y={"131"} textAnchor={"end"}>{"1,500"}</text>
-        <rect className={"pw"} x={"62"} y={"144"} width={"96"} height={"22"} rx={"6"}></rect>
-        <text className={"sm"} x={"70"} y={"159"}>{"Jeans"}</text>
-        <text className={"st"} x={"150"} y={"159"} textAnchor={"end"}>{"2,000"}</text>
-        <rect className={"pw"} x={"62"} y={"172"} width={"96"} height={"22"} rx={"6"}></rect>
-        <text className={"sm"} x={"70"} y={"187"}>{"Shirt"}</text>
-        <text className={"st"} x={"150"} y={"187"} textAnchor={"end"}>{"1,000"}</text>
-        <rect className={"py"} x={"72"} y={"214"} width={"76"} height={"24"} rx={"12"}></rect>
-        <text className={"st"} x={"110"} y={"230"} textAnchor={"middle"}>{"Confirm"}</text>
-      </svg>
+      <img src={voiceProductsImg} alt={"A vendor speaking to his phone while a product list appears"} width={736} height={912} loading="lazy" />
     </div>
   </div>
   <div className={"tp"} role={"tabpanel"} id={"tp2"} aria-labelledby={"tab2"} hidden={activeTab !== 2}>
@@ -106,19 +72,7 @@ export default function FeaturesSection() {
       </ul>
     </div>
     <div className={"pimg"}>
-      <svg viewBox={"0 0 220 300"} role={"img"} aria-label={"Short shop video"}>
-        <rect className={"pf"} x={"45"} y={"8"} width={"130"} height={"284"} rx={"20"}></rect>
-        <rect className={"pg"} x={"88"} y={"14"} width={"44"} height={"6"} rx={"3"}></rect>
-        <rect className={"pg"} x={"58"} y={"32"} width={"104"} height={"124"} rx={"10"}></rect>
-        <circle className={"py"} cx={"110"} cy={"94"} r={"18"}></circle>
-        <path className={"pi"} d={"M104 84 L121 94 L104 104 Z"}></path>
-        <rect className={"pw"} x={"62"} y={"168"} width={"96"} height={"6"} rx={"3"}></rect>
-        <rect className={"py"} x={"62"} y={"168"} width={"42"} height={"6"} rx={"3"}></rect>
-        <text className={"sm"} x={"62"} y={"192"}>{"0:15 shop intro"}</text>
-        <rect className={"pg"} x={"62"} y={"208"} width={"28"} height={"28"} rx={"6"}></rect>
-        <rect className={"pg"} x={"96"} y={"208"} width={"28"} height={"28"} rx={"6"}></rect>
-        <rect className={"pg"} x={"130"} y={"208"} width={"28"} height={"28"} rx={"6"}></rect>
-      </svg>
+      <img src={shopVideoImg} alt={"A shop owner recording a short video of her clothing stall"} width={736} height={912} loading="lazy" />
     </div>
   </div>
   <div className={"tp"} role={"tabpanel"} id={"tp3"} aria-labelledby={"tab3"} hidden={activeTab !== 3}>
@@ -132,26 +86,7 @@ export default function FeaturesSection() {
       </ul>
     </div>
     <div className={"pimg"}>
-      <svg viewBox={"0 0 220 300"} role={"img"} aria-label={"Customer ordering page"}>
-        <rect className={"pf"} x={"45"} y={"8"} width={"130"} height={"284"} rx={"20"}></rect>
-        <rect className={"pg"} x={"88"} y={"14"} width={"44"} height={"6"} rx={"3"}></rect>
-        <rect className={"pw"} x={"58"} y={"32"} width={"50"} height={"58"} rx={"8"}></rect>
-        <circle className={"pg"} cx={"83"} cy={"54"} r={"12"}></circle>
-        <rect className={"py"} x={"66"} y={"72"} width={"34"} height={"12"} rx={"6"}></rect>
-        <rect className={"pw"} x={"112"} y={"32"} width={"50"} height={"58"} rx={"8"}></rect>
-        <circle className={"pg"} cx={"137"} cy={"54"} r={"12"}></circle>
-        <rect className={"py"} x={"120"} y={"72"} width={"34"} height={"12"} rx={"6"}></rect>
-        <rect className={"pw"} x={"58"} y={"98"} width={"50"} height={"58"} rx={"8"}></rect>
-        <circle className={"pg"} cx={"83"} cy={"120"} r={"12"}></circle>
-        <rect className={"py"} x={"66"} y={"138"} width={"34"} height={"12"} rx={"6"}></rect>
-        <rect className={"pw"} x={"112"} y={"98"} width={"50"} height={"58"} rx={"8"}></rect>
-        <circle className={"pg"} cx={"137"} cy={"120"} r={"12"}></circle>
-        <rect className={"py"} x={"120"} y={"138"} width={"34"} height={"12"} rx={"6"}></rect>
-        <rect className={"py"} x={"66"} y={"176"} width={"88"} height={"24"} rx={"12"}></rect>
-        <text className={"st"} x={"110"} y={"192"} textAnchor={"middle"}>{"Order"}</text>
-        <path className={"pl"} d={"M110 232 v-14 M110 236 m-3 0 a3 3 0 1 0 6 0 a3 3 0 1 0 -6 0"}></path>
-        <text className={"sm"} x={"110"} y={"256"} textAnchor={"middle"}>{"Pin + landmark"}</text>
-      </svg>
+      <img src={orderingImg} alt={"A customer browsing products and ordering on her phone"} width={736} height={912} loading="lazy" />
     </div>
   </div>
   <div className={"tp"} role={"tabpanel"} id={"tp4"} aria-labelledby={"tab4"} hidden={activeTab !== 4}>
@@ -165,18 +100,7 @@ export default function FeaturesSection() {
       </ul>
     </div>
     <div className={"pimg"}>
-      <svg viewBox={"0 0 220 300"} role={"img"} aria-label={"M-Pesa payment confirmed"}>
-        <rect className={"pf"} x={"45"} y={"8"} width={"130"} height={"284"} rx={"20"}></rect>
-        <rect className={"pg"} x={"88"} y={"14"} width={"44"} height={"6"} rx={"3"}></rect>
-        <circle className={"py"} cx={"110"} cy={"76"} r={"26"}></circle>
-        <path className={"pl"} d={"M98 76 l8 8 16-18"}></path>
-        <text className={"sm"} x={"110"} y={"128"} textAnchor={"middle"}>{"Payment success"}</text>
-        <text className={"st"} x={"110"} y={"150"} textAnchor={"middle"}>{"KES 600"}</text>
-        <rect className={"pw"} x={"64"} y={"166"} width={"92"} height={"26"} rx={"8"}></rect>
-        <text className={"sm"} x={"110"} y={"183"} textAnchor={"middle"}>{"Paid with M-Pesa"}</text>
-        <rect className={"py"} x={"72"} y={"214"} width={"76"} height={"24"} rx={"12"}></rect>
-        <text className={"st"} x={"110"} y={"230"} textAnchor={"middle"}>{"Done"}</text>
-      </svg>
+      <img src={mpesaImg} alt={"A customer approving a mobile money payment on their phone"} width={736} height={912} loading="lazy" />
     </div>
   </div>
   <div className={"tp"} role={"tabpanel"} id={"tp5"} aria-labelledby={"tab5"} hidden={activeTab !== 5}>
@@ -190,24 +114,7 @@ export default function FeaturesSection() {
       </ul>
     </div>
     <div className={"pimg"}>
-      <svg viewBox={"0 0 220 300"} role={"img"} aria-label={"Order alerts"}>
-        <rect className={"pf"} x={"45"} y={"8"} width={"130"} height={"284"} rx={"20"}></rect>
-        <rect className={"pg"} x={"88"} y={"14"} width={"44"} height={"6"} rx={"3"}></rect>
-        <rect className={"pw"} x={"58"} y={"36"} width={"104"} height={"44"} rx={"10"}></rect>
-        <circle className={"py"} cx={"74"} cy={"58"} r={"8"}></circle>
-        <rect className={"pg"} x={"90"} y={"50"} width={"62"} height={"7"} rx={"3"}></rect>
-        <rect className={"pg"} x={"90"} y={"62"} width={"42"} height={"6"} rx={"3"}></rect>
-        <rect className={"pw"} x={"58"} y={"90"} width={"104"} height={"44"} rx={"10"}></rect>
-        <circle className={"py"} cx={"74"} cy={"112"} r={"8"}></circle>
-        <rect className={"pg"} x={"90"} y={"104"} width={"62"} height={"7"} rx={"3"}></rect>
-        <rect className={"pg"} x={"90"} y={"116"} width={"42"} height={"6"} rx={"3"}></rect>
-        <rect className={"pw"} x={"58"} y={"144"} width={"104"} height={"44"} rx={"10"}></rect>
-        <circle className={"py"} cx={"74"} cy={"166"} r={"8"}></circle>
-        <rect className={"pg"} x={"90"} y={"158"} width={"62"} height={"7"} rx={"3"}></rect>
-        <rect className={"pg"} x={"90"} y={"170"} width={"42"} height={"6"} rx={"3"}></rect>
-        <rect className={"py"} x={"72"} y={"206"} width={"76"} height={"24"} rx={"12"}></rect>
-        <text className={"st"} x={"110"} y={"222"} textAnchor={"middle"}>{"Ready"}</text>
-      </svg>
+      <img src={alertsImg} alt={"A vendor receiving instant order notifications on her phone"} width={736} height={912} loading="lazy" />
     </div>
   </div>
   <div className={"tp"} role={"tabpanel"} id={"tp6"} aria-labelledby={"tab6"} hidden={activeTab !== 6}>
@@ -222,24 +129,7 @@ export default function FeaturesSection() {
       </ul>
     </div>
     <div className={"pimg"}>
-      <svg viewBox={"0 0 220 300"} role={"img"} aria-label={"Delivery route and code"}>
-        <rect className={"pf"} x={"45"} y={"8"} width={"130"} height={"284"} rx={"20"}></rect>
-        <rect className={"pg"} x={"88"} y={"14"} width={"44"} height={"6"} rx={"3"}></rect>
-        <rect className={"pg"} x={"58"} y={"32"} width={"104"} height={"120"} rx={"10"}></rect>
-        <path className={"pl"} d={"M72 138 L72 110 L110 110 L110 70 L146 70"}></path>
-        <circle className={"py"} cx={"72"} cy={"138"} r={"6"}></circle>
-        <circle className={"pi"} cx={"146"} cy={"70"} r={"6"}></circle>
-        <rect className={"pw"} x={"58"} y={"164"} width={"104"} height={"60"} rx={"10"}></rect>
-        <text className={"sm"} x={"110"} y={"182"} textAnchor={"middle"}>{"Delivery code"}</text>
-        <rect className={"pg"} x={"64"} y={"190"} width={"20"} height={"24"} rx={"5"}></rect>
-        <text className={"st"} x={"74"} y={"207"} textAnchor={"middle"}>{"4"}</text>
-        <rect className={"pg"} x={"88"} y={"190"} width={"20"} height={"24"} rx={"5"}></rect>
-        <text className={"st"} x={"98"} y={"207"} textAnchor={"middle"}>{"7"}</text>
-        <rect className={"pg"} x={"112"} y={"190"} width={"20"} height={"24"} rx={"5"}></rect>
-        <text className={"st"} x={"122"} y={"207"} textAnchor={"middle"}>{"2"}</text>
-        <rect className={"pg"} x={"136"} y={"190"} width={"20"} height={"24"} rx={"5"}></rect>
-        <text className={"st"} x={"146"} y={"207"} textAnchor={"middle"}>{"9"}</text>
-      </svg>
+      <img src={deliveryImg} alt={"A delivery rider on a motorbike carrying an order through the city"} width={736} height={912} loading="lazy" />
     </div>
   </div>
   <div className={"tp"} role={"tabpanel"} id={"tp7"} aria-labelledby={"tab7"} hidden={activeTab !== 7}>
@@ -252,25 +142,7 @@ export default function FeaturesSection() {
       </ul>
     </div>
     <div className={"pimg"}>
-      <svg viewBox={"0 0 220 300"} role={"img"} aria-label={"Sales record"}>
-        <rect className={"pf"} x={"45"} y={"8"} width={"130"} height={"284"} rx={"20"}></rect>
-        <rect className={"pg"} x={"88"} y={"14"} width={"44"} height={"6"} rx={"3"}></rect>
-        <rect className={"pw"} x={"58"} y={"32"} width={"104"} height={"96"} rx={"10"}></rect>
-        <rect className={"py"} x={"70"} y={"96"} width={"12"} height={"20"} rx={"3"}></rect>
-        <rect className={"py"} x={"88"} y={"82"} width={"12"} height={"34"} rx={"3"}></rect>
-        <rect className={"py"} x={"106"} y={"88"} width={"12"} height={"28"} rx={"3"}></rect>
-        <rect className={"py"} x={"124"} y={"64"} width={"12"} height={"52"} rx={"3"}></rect>
-        <rect className={"py"} x={"142"} y={"76"} width={"12"} height={"40"} rx={"3"}></rect>
-        <rect className={"pw"} x={"58"} y={"142"} width={"104"} height={"24"} rx={"8"}></rect>
-        <text className={"sm"} x={"66"} y={"158"}>{"Orders today"}</text>
-        <text className={"st"} x={"154"} y={"158"} textAnchor={"end"}>{"12"}</text>
-        <rect className={"pw"} x={"58"} y={"172"} width={"104"} height={"24"} rx={"8"}></rect>
-        <text className={"sm"} x={"66"} y={"188"}>{"Paid"}</text>
-        <text className={"st"} x={"154"} y={"188"} textAnchor={"end"}>{"KES 7,800"}</text>
-        <rect className={"pw"} x={"58"} y={"202"} width={"104"} height={"24"} rx={"8"}></rect>
-        <text className={"sm"} x={"66"} y={"218"}>{"Delivered"}</text>
-        <text className={"st"} x={"154"} y={"218"} textAnchor={"end"}>{"11"}</text>
-      </svg>
+      <img src={recordsImg} alt={"A vendor reviewing her sales record on her phone"} width={736} height={912} loading="lazy" />
     </div>
   </div>
   {"\n"}
