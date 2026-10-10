@@ -1,9 +1,12 @@
 import { useState } from "react";
+import TrustSection from "./TrustSection";
+import BuiltOnSection from "./BuiltOnSection";
 
 export default function FeaturesSection() {
   const [activeTab, setActiveTab] = useState(0);
 
   return (
+<>
 <section id={"features"} className={"features-page"}>
   {"\n"}
   <header className={"section-heading features-heading"}>
@@ -272,5 +275,8 @@ export default function FeaturesSection() {
   </div>
   {"\n"}
 </section>
+<TrustSection />
+<BuiltOnSection />
+</>
   );
 }
