@@ -93,7 +93,7 @@ h2{font-size:clamp(26px,5vw,38px);line-height:1.15;margin:0 0 10px;letter-spacin
 .pimg .sm{font:500 8px system-ui,sans-serif;fill:var(--mut)}
 .band{background:var(--ysoft);border-radius:20px;padding:44px 24px;text-align:center;margin:24px 0}
 .band h2{margin-bottom:18px}
-footer{border-top:1px solid var(--line);padding:24px 0 32px;color:var(--mut);font-size:14px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+footer{border-top:1px solid var(--line);padding:32px 0 28px;color:var(--mut);font-size:14px}
 .ln svg *{stroke:var(--yd);stroke-width:2.2;fill:none;stroke-linecap:round;stroke-linejoin:round}
 .ln svg .fy{fill:var(--ysoft)}
 .tiles{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
@@ -147,8 +147,17 @@ a{color:inherit}
 .faq summary::-webkit-details-marker{display:none}.faq summary:after{content:"+";color:var(--yd);font-size:22px;line-height:1}
 .faq details[open] summary:after{content:"\2212"}
 .faq p{margin:10px 0 0;color:var(--mut)}
-.fc{display:grid;gap:24px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));width:100%;padding-bottom:12px}
-.fc h4{margin:0 0 8px;font-size:14px;color:var(--ink)}.fc a{display:block;text-decoration:none;color:var(--mut);font-size:14px;padding:3px 0}
+.fc{display:grid;gap:24px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));width:100%;padding-bottom:20px}
+.fc h4{margin:0 0 8px;font-size:13px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--ink)}.fc a{display:block;text-decoration:none;color:var(--mut);font-size:14px;padding:4px 0;transition:color .15s}
+.fc a:hover{color:var(--yd)}
+.fbrand{display:flex;flex-direction:column;gap:2px}
+.flogo{display:inline-flex;align-items:center;gap:8px;color:#eef0f3;text-decoration:none;font-size:24px;font-weight:750;letter-spacing:-1px;margin-bottom:8px}
+.flogo svg{width:30px;height:30px;fill:var(--y);stroke:var(--y);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.fbrand p{margin:0;color:var(--mut);font-size:14px}
+.fbrand a{display:inline-block;padding:6px 0 0}
+.fbottom{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;border-top:1px solid var(--line);padding-top:16px}
+.fbottom a{color:var(--mut);text-decoration:none;font-weight:600}
+.fbottom a:hover{color:var(--yd)}
 
 /* New landing-page hero, matched to the supplied visual reference. */
 :root{--bg:#111824;--card:#1b2432;--ink:#f4ead3;--mut:#a6abb5;--line:#333d49;--y:#f5bd39;--yd:#f2c75f;--ysoft:#252b32;color-scheme:dark}
