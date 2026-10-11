@@ -1,0 +1,3 @@
+- [ ] Replace Vision stage icons with matching photographic images.
+- [ ] Replace the illustrated global expansion map with interactive Google Maps, preserving planned expansion labels.
+- [ ] Verify photos and non-Maps page behavior; document live map verification limitation.

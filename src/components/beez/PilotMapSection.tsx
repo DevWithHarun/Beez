@@ -1,59 +1,88 @@
+import { useEffect, useRef, useState } from "react";
+import { loadGoogleMaps } from "./googleMaps";
+
+const pilot = { lat: -4.0435, lng: 39.6682 };
+const targets = [
+  { title: "Africa", position: { lat: 7, lng: 8 } },
+  { title: "India", position: { lat: 20.5937, lng: 78.9629 } },
+  { title: "Beyond: Latin America", position: { lat: -14, lng: -52 } },
+  { title: "Beyond: Southeast Asia", position: { lat: -2, lng: 118 } },
+];
+
 export default function PilotMapSection() {
+  const canvas = useRef<HTMLDivElement>(null);
+  const [status, setStatus] = useState("Loading world map…");
+
+  useEffect(() => {
+    let disposed = false;
+    const cleanups: Array<() => void> = [];
+    loadGoogleMaps().then((maps) => {
+      if (disposed || !canvas.current) return;
+      const tokens = getComputedStyle(document.documentElement);
+      const color = (name: string) => tokens.getPropertyValue(name).trim();
+      const map = new maps.Map(canvas.current, {
+        center: { lat: 8, lng: 25 }, zoom: 2, minZoom: 2,
+        clickableIcons: false, streetViewControl: false, mapTypeControl: false,
+        fullscreenControl: true, zoomControl: true, gestureHandling: "cooperative",
+        backgroundColor: color("--map-water"),
+        styles: [
+          { elementType: "geometry", stylers: [{ color: color("--map-land") }] },
+          { elementType: "labels.text.fill", stylers: [{ color: color("--map-label") }] },
+          { elementType: "labels.text.stroke", stylers: [{ color: color("--map-water") }] },
+          { featureType: "water", elementType: "geometry", stylers: [{ color: color("--map-water") }] },
+          { featureType: "road", elementType: "geometry", stylers: [{ color: color("--map-road") }] },
+          { featureType: "poi", stylers: [{ visibility: "off" }] },
+          { featureType: "transit", stylers: [{ visibility: "off" }] },
+        ],
+      });
+      const info = new maps.InfoWindow();
+      const showInfo = (marker: google.maps.Marker, title: string, description: string) => {
+        const content = document.createElement("div");
+        content.className = "expansion-info";
+        const heading = document.createElement("strong");
+        heading.textContent = title;
+        const detail = document.createElement("span");
+        detail.textContent = description;
+        content.append(heading, detail);
+        info.setContent(content);
+        info.open({ map, anchor: marker });
+      };
+      const pilotMarker = new maps.Marker({
+        map, position: pilot, title: "Mombasa, Kenya — Kenya pilot, now",
+        icon: { path: maps.SymbolPath.CIRCLE, scale: 9, fillColor: color("--y"), fillOpacity: 1, strokeColor: color("--y"), strokeWeight: 3 },
+        label: { text: "Mombasa, Kenya", color: color("--ink"), fontSize: "12px", fontWeight: "600" },
+      });
+      const pilotClick = pilotMarker.addListener("click", () => showInfo(pilotMarker, "Mombasa, Kenya", "Kenya pilot, now"));
+      cleanups.push(() => { pilotClick.remove(); pilotMarker.setMap(null); });
+      targets.forEach((target) => {
+        const marker = new maps.Marker({
+          map, position: target.position, title: `${target.title} — Expansion target`,
+          icon: { path: maps.SymbolPath.CIRCLE, scale: 6, fillColor: color("--map-target"), fillOpacity: 0.25, strokeColor: color("--map-target"), strokeWeight: 2 },
+        });
+        const line = new maps.Polyline({ map, path: [pilot, target.position], geodesic: true, strokeColor: color("--y"), strokeOpacity: 0.8, strokeWeight: 2 });
+        const click = marker.addListener("click", () => showInfo(marker, target.title, "Expansion target — not an active location."));
+        cleanups.push(() => { click.remove(); marker.setMap(null); line.setMap(null); });
+      });
+      const idle = maps.event.addListenerOnce(map, "idle", () => { if (!disposed) setStatus(""); });
+      cleanups.push(() => { idle.remove(); info.close(); maps.event.clearInstanceListeners(map); });
+    }).catch((error: unknown) => {
+      if (!disposed) setStatus(error instanceof Error ? error.message : "The world map is unavailable.");
+    });
+    return () => { disposed = true; cleanups.forEach((cleanup) => cleanup()); };
+  }, []);
+
   return (
-<section className={"mission-map"}>
-  {"\n"}
-  <h3>{"Global Expansion Map & Mission"}</h3>
-  {"\n"}
-  <div className={"map"}>
-    {"\n"}
-    <svg viewBox={"0 0 720 280"} role={"img"} aria-label={"World map with Mombasa, Kenya marked as the pilot, and Africa, India and other regions marked as the target"}>
-      {"\n"}
-      <path className={"land"} d={"M220 4h0M228 4h0M236 4h0M244 4h0M252 4h0M260 4h0M268 4h0M276 4h0M284 4h0M292 4h0M300 4h0M308 4h0M316 4h0M540 4h0M548 4h0M556 4h0M564 4h0M572 4h0M228 12h0M236 12h0M244 12h0M252 12h0M260 12h0M268 12h0M276 12h0M284 12h0M292 12h0M300 12h0M308 12h0M316 12h0M500 12h0M508 12h0M516 12h0M524 12h0M532 12h0M540 12h0M548 12h0M556 12h0M564 12h0M572 12h0M580 12h0M588 12h0M596 12h0M604 12h0M612 12h0M620 12h0M628 12h0M636 12h0M36 20h0M44 20h0M52 20h0M60 20h0M68 20h0M76 20h0M84 20h0M92 20h0M100 20h0M108 20h0M116 20h0M124 20h0M132 20h0M140 20h0M148 20h0M156 20h0M164 20h0M172 20h0M180 20h0M188 20h0M196 20h0M204 20h0M236 20h0M244 20h0M252 20h0M260 20h0M268 20h0M276 20h0M284 20h0M292 20h0M300 20h0M308 20h0M396 20h0M404 20h0M412 20h0M420 20h0M428 20h0M460 20h0M468 20h0M476 20h0M484 20h0M492 20h0M500 20h0M508 20h0M516 20h0M524 20h0M532 20h0M540 20h0M548 20h0M556 20h0M564 20h0M572 20h0M580 20h0M588 20h0M596 20h0M604 20h0M612 20h0M620 20h0M628 20h0M636 20h0M644 20h0M652 20h0M660 20h0M668 20h0M676 20h0M684 20h0M692 20h0M28 28h0M36 28h0M44 28h0M52 28h0M60 28h0M68 28h0M76 28h0M84 28h0M92 28h0M100 28h0M108 28h0M116 28h0M124 28h0M132 28h0M140 28h0M148 28h0M156 28h0M164 28h0M172 28h0M180 28h0M188 28h0M196 28h0M204 28h0M212 28h0M220 28h0M244 28h0M252 28h0M260 28h0M268 28h0M276 28h0M284 28h0M380 28h0M388 28h0M396 28h0M404 28h0M412 28h0M420 28h0M428 28h0M436 28h0M444 28h0M452 28h0M460 28h0M468 28h0M476 28h0M484 28h0M492 28h0M500 28h0M508 28h0M516 28h0M524 28h0M532 28h0M540 28h0M548 28h0M556 28h0M564 28h0M572 28h0M580 28h0M588 28h0M596 28h0M604 28h0M612 28h0M620 28h0M628 28h0M636 28h0M644 28h0M652 28h0M660 28h0M668 28h0M676 28h0M684 28h0M692 28h0M700 28h0M708 28h0M44 36h0M52 36h0M60 36h0M68 36h0M76 36h0M84 36h0M92 36h0M100 36h0M108 36h0M116 36h0M124 36h0M132 36h0M140 36h0M148 36h0M156 36h0M164 36h0M172 36h0M180 36h0M188 36h0M196 36h0M204 36h0M212 36h0M220 36h0M228 36h0M252 36h0M260 36h0M268 36h0M380 36h0M388 36h0M396 36h0M404 36h0M412 36h0M420 36h0M428 36h0M436 36h0M444 36h0M452 36h0M460 36h0M468 36h0M476 36h0M484 36h0M492 36h0M500 36h0M508 36h0M516 36h0M524 36h0M532 36h0M540 36h0M548 36h0M556 36h0M564 36h0M572 36h0M580 36h0M588 36h0M596 36h0M604 36h0M612 36h0M620 36h0M628 36h0M636 36h0M644 36h0M652 36h0M660 36h0M668 36h0M676 36h0M684 36h0M692 36h0M100 44h0M108 44h0M116 44h0M124 44h0M132 44h0M140 44h0M148 44h0M156 44h0M164 44h0M172 44h0M180 44h0M188 44h0M196 44h0M204 44h0M212 44h0M220 44h0M228 44h0M236 44h0M348 44h0M356 44h0M380 44h0M388 44h0M396 44h0M404 44h0M412 44h0M420 44h0M428 44h0M436 44h0M444 44h0M452 44h0M460 44h0M468 44h0M476 44h0M484 44h0M492 44h0M500 44h0M508 44h0M516 44h0M524 44h0M532 44h0M540 44h0M548 44h0M556 44h0M564 44h0M572 44h0M580 44h0M588 44h0M596 44h0M604 44h0M612 44h0M620 44h0M628 44h0M636 44h0M644 44h0M652 44h0M660 44h0M668 44h0M676 44h0M108 52h0M116 52h0M124 52h0M132 52h0M140 52h0M148 52h0M156 52h0M164 52h0M172 52h0M180 52h0M188 52h0M196 52h0M204 52h0M212 52h0M220 52h0M228 52h0M236 52h0M244 52h0M348 52h0M356 52h0M372 52h0M380 52h0M388 52h0M396 52h0M404 52h0M412 52h0M420 52h0M428 52h0M436 52h0M444 52h0M452 52h0M460 52h0M468 52h0M476 52h0M484 52h0M492 52h0M500 52h0M508 52h0M516 52h0M524 52h0M532 52h0M540 52h0M548 52h0M556 52h0M564 52h0M572 52h0M580 52h0M588 52h0M596 52h0M604 52h0M612 52h0M620 52h0M628 52h0M636 52h0M644 52h0M652 52h0M660 52h0M668 52h0M116 60h0M124 60h0M132 60h0M140 60h0M148 60h0M156 60h0M164 60h0M172 60h0M180 60h0M188 60h0M196 60h0M204 60h0M212 60h0M220 60h0M228 60h0M236 60h0M356 60h0M364 60h0M372 60h0M380 60h0M388 60h0M396 60h0M404 60h0M412 60h0M420 60h0M428 60h0M460 60h0M468 60h0M476 60h0M484 60h0M492 60h0M500 60h0M508 60h0M516 60h0M524 60h0M532 60h0M540 60h0M548 60h0M556 60h0M564 60h0M572 60h0M580 60h0M588 60h0M596 60h0M604 60h0M612 60h0M620 60h0M628 60h0M636 60h0M116 68h0M124 68h0M132 68h0M140 68h0M148 68h0M156 68h0M164 68h0M172 68h0M180 68h0M188 68h0M196 68h0M204 68h0M212 68h0M220 68h0M348 68h0M356 68h0M364 68h0M372 68h0M380 68h0M388 68h0M396 68h0M404 68h0M412 68h0M436 68h0M444 68h0M452 68h0M460 68h0M468 68h0M476 68h0M484 68h0M492 68h0M500 68h0M508 68h0M516 68h0M524 68h0M532 68h0M540 68h0M548 68h0M556 68h0M564 68h0M572 68h0M580 68h0M588 68h0M596 68h0M604 68h0M612 68h0M620 68h0M628 68h0M116 76h0M124 76h0M132 76h0M140 76h0M148 76h0M156 76h0M164 76h0M172 76h0M180 76h0M188 76h0M196 76h0M204 76h0M212 76h0M348 76h0M356 76h0M380 76h0M388 76h0M396 76h0M404 76h0M412 76h0M420 76h0M428 76h0M436 76h0M444 76h0M452 76h0M460 76h0M468 76h0M476 76h0M484 76h0M492 76h0M500 76h0M508 76h0M516 76h0M524 76h0M532 76h0M540 76h0M548 76h0M556 76h0M564 76h0M572 76h0M580 76h0M588 76h0M596 76h0M604 76h0M612 76h0M620 76h0M124 84h0M132 84h0M140 84h0M148 84h0M156 84h0M164 84h0M172 84h0M180 84h0M188 84h0M196 84h0M204 84h0M340 84h0M356 84h0M364 84h0M372 84h0M380 84h0M436 84h0M444 84h0M452 84h0M460 84h0M468 84h0M476 84h0M484 84h0M492 84h0M500 84h0M508 84h0M516 84h0M524 84h0M532 84h0M540 84h0M548 84h0M556 84h0M564 84h0M572 84h0M580 84h0M588 84h0M596 84h0M604 84h0M612 84h0M620 84h0M628 84h0M132 92h0M140 92h0M148 92h0M156 92h0M164 92h0M172 92h0M180 92h0M188 92h0M196 92h0M348 92h0M356 92h0M364 92h0M372 92h0M380 92h0M388 92h0M396 92h0M404 92h0M436 92h0M444 92h0M452 92h0M460 92h0M468 92h0M476 92h0M484 92h0M492 92h0M500 92h0M508 92h0M516 92h0M524 92h0M532 92h0M540 92h0M548 92h0M556 92h0M564 92h0M572 92h0M580 92h0M588 92h0M596 92h0M604 92h0M140 100h0M148 100h0M156 100h0M164 100h0M172 100h0M196 100h0M340 100h0M348 100h0M356 100h0M364 100h0M372 100h0M380 100h0M388 100h0M396 100h0M404 100h0M412 100h0M420 100h0M436 100h0M444 100h0M452 100h0M468 100h0M476 100h0M484 100h0M492 100h0M500 100h0M508 100h0M516 100h0M524 100h0M532 100h0M540 100h0M548 100h0M556 100h0M564 100h0M572 100h0M580 100h0M588 100h0M596 100h0M140 108h0M148 108h0M156 108h0M164 108h0M332 108h0M340 108h0M348 108h0M356 108h0M364 108h0M372 108h0M380 108h0M388 108h0M396 108h0M404 108h0M412 108h0M420 108h0M428 108h0M436 108h0M444 108h0M452 108h0M460 108h0M500 108h0M508 108h0M516 108h0M524 108h0M532 108h0M540 108h0M548 108h0M556 108h0M564 108h0M572 108h0M580 108h0M588 108h0M596 108h0M156 116h0M164 116h0M172 116h0M180 116h0M332 116h0M340 116h0M348 116h0M356 116h0M364 116h0M372 116h0M380 116h0M388 116h0M396 116h0M404 116h0M412 116h0M420 116h0M428 116h0M444 116h0M452 116h0M460 116h0M468 116h0M508 116h0M516 116h0M524 116h0M548 116h0M556 116h0M564 116h0M572 116h0M580 116h0M588 116h0M172 124h0M180 124h0M332 124h0M340 124h0M348 124h0M356 124h0M364 124h0M372 124h0M380 124h0M388 124h0M396 124h0M404 124h0M412 124h0M420 124h0M428 124h0M436 124h0M444 124h0M452 124h0M460 124h0M508 124h0M516 124h0M556 124h0M564 124h0M572 124h0M580 124h0M196 132h0M332 132h0M340 132h0M348 132h0M356 132h0M364 132h0M372 132h0M380 132h0M388 132h0M396 132h0M404 132h0M412 132h0M420 132h0M428 132h0M436 132h0M444 132h0M516 132h0M556 132h0M564 132h0M572 132h0M204 140h0M212 140h0M220 140h0M228 140h0M236 140h0M340 140h0M348 140h0M356 140h0M364 140h0M372 140h0M380 140h0M388 140h0M396 140h0M404 140h0M412 140h0M420 140h0M428 140h0M436 140h0M444 140h0M452 140h0M460 140h0M556 140h0M564 140h0M572 140h0M204 148h0M212 148h0M220 148h0M228 148h0M236 148h0M244 148h0M252 148h0M380 148h0M388 148h0M396 148h0M404 148h0M412 148h0M420 148h0M428 148h0M436 148h0M444 148h0M452 148h0M460 148h0M564 148h0M204 156h0M212 156h0M220 156h0M228 156h0M236 156h0M244 156h0M252 156h0M380 156h0M388 156h0M396 156h0M404 156h0M412 156h0M420 156h0M428 156h0M436 156h0M444 156h0M452 156h0M580 156h0M588 156h0M596 156h0M604 156h0M612 156h0M204 164h0M212 164h0M220 164h0M228 164h0M236 164h0M244 164h0M252 164h0M260 164h0M268 164h0M276 164h0M388 164h0M396 164h0M404 164h0M412 164h0M420 164h0M428 164h0M436 164h0M572 164h0M580 164h0M588 164h0M596 164h0M604 164h0M612 164h0M620 164h0M628 164h0M636 164h0M204 172h0M212 172h0M220 172h0M228 172h0M236 172h0M244 172h0M252 172h0M260 172h0M268 172h0M276 172h0M284 172h0M388 172h0M396 172h0M404 172h0M412 172h0M420 172h0M428 172h0M436 172h0M604 172h0M612 172h0M620 172h0M628 172h0M636 172h0M212 180h0M220 180h0M228 180h0M236 180h0M244 180h0M252 180h0M260 180h0M268 180h0M276 180h0M284 180h0M388 180h0M396 180h0M404 180h0M412 180h0M420 180h0M428 180h0M436 180h0M636 180h0M644 180h0M220 188h0M228 188h0M236 188h0M244 188h0M252 188h0M260 188h0M268 188h0M276 188h0M284 188h0M388 188h0M396 188h0M404 188h0M412 188h0M420 188h0M428 188h0M436 188h0M452 188h0M612 188h0M620 188h0M628 188h0M636 188h0M644 188h0M220 196h0M228 196h0M236 196h0M244 196h0M252 196h0M260 196h0M268 196h0M276 196h0M388 196h0M396 196h0M404 196h0M412 196h0M420 196h0M428 196h0M452 196h0M596 196h0M604 196h0M612 196h0M620 196h0M628 196h0M636 196h0M644 196h0M652 196h0M220 204h0M228 204h0M236 204h0M244 204h0M252 204h0M260 204h0M268 204h0M396 204h0M404 204h0M412 204h0M420 204h0M428 204h0M452 204h0M588 204h0M596 204h0M604 204h0M612 204h0M620 204h0M628 204h0M636 204h0M644 204h0M652 204h0M660 204h0M220 212h0M228 212h0M236 212h0M244 212h0M252 212h0M260 212h0M396 212h0M404 212h0M412 212h0M420 212h0M588 212h0M596 212h0M604 212h0M612 212h0M620 212h0M628 212h0M636 212h0M644 212h0M652 212h0M660 212h0M220 220h0M228 220h0M236 220h0M244 220h0M252 220h0M404 220h0M412 220h0M596 220h0M604 220h0M612 220h0M628 220h0M636 220h0M644 220h0M652 220h0M660 220h0M220 228h0M228 228h0M236 228h0M244 228h0M644 228h0M652 228h0M660 228h0M212 236h0M220 236h0M228 236h0M236 236h0M220 244h0M228 244h0M220 252h0M220 260h0"}></path>
-      {"\n"}
-      <path className={"arc"} d={"M439 164 Q405 112 367 143"}></path>
-      {"\n"}
-      <path className={"arc"} d={"M439 164 Q480 100 506 118"}></path>
-      <path className={"arc"} d={"M439 164 Q355 118 267 203"}></path>
-      <path className={"arc"} d={"M439 164 Q506 142 574 168"}></path>
-      {"\n"}
-      <circle className={"vis"} cx={"367"} cy={"143"} r={"7"}></circle>
-      <circle className={"dotc"} cx={"367"} cy={"143"} r={"2"}></circle>
-      <circle className={"vis"} cx={"506"} cy={"118"} r={"7"}></circle>
-      <circle className={"dotc"} cx={"506"} cy={"118"} r={"2"}></circle>
-      <circle className={"vis"} cx={"267"} cy={"203"} r={"7"}></circle>
-      <circle className={"dotc"} cx={"267"} cy={"203"} r={"2"}></circle>
-      <circle className={"vis"} cx={"574"} cy={"168"} r={"7"}></circle>
-      <circle className={"dotc"} cx={"574"} cy={"168"} r={"2"}></circle>
-      {"\n"}
-      <circle className={"pulse"} cx={"439"} cy={"164"} r={"16"}></circle>
-      {"\n"}
-      <circle className={"ring"} cx={"439"} cy={"164"} r={"10"}></circle>
-      {"\n"}
-      <circle className={"ring"} cx={"439"} cy={"164"} r={"5"}></circle>
-      {"\n"}
-      <circle className={"dotc"} cx={"439"} cy={"164"} r={"2.5"}></circle>
-      <text className={"map-label"} x={"452"} y={"171"}>{"Mombasa, Kenya"}</text>
-      {"\n"}
-    </svg>
-    {"\n"}
-    <div className={"legend"}>
-      <span>
-        <i className={"k now"}></i>
-        {"Kenya pilot, now"}
-      </span>
-      <span>
-        <i className={"k"}></i>
-        {"Target: Africa, India and beyond"}
-      </span>
-    </div>
-    {"\n"}
-  </div>
-  {"\n"}
-    <p className={"goal"}>
-      {"The target: "}
-      <b>{"every informal merchant, counted."}</b>
-    </p>
-  {"\n"}
-</section>
+    <section className="mission-map">
+      <h3>Global Expansion Map &amp; Mission</h3>
+      <div className="map">
+        <div ref={canvas} className="world-map-canvas" role="region" aria-label="Interactive global expansion map, with Mombasa as the Kenya pilot" />
+        {status && <p className="map-message" role="status">{status}</p>}
+        <div className="legend">
+          <span><i className="k now" aria-hidden="true" />Kenya pilot, now</span>
+          <span><i className="k" aria-hidden="true" />Target: Africa, India and beyond</span>
+        </div>
+      </div>
+      <p className="goal">The target: <b>every informal merchant, counted.</b></p>
+    </section>
   );
 }
