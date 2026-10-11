@@ -1,14 +1,16 @@
-# Welcome to your Lovable project
+# BEEZ Landing Page
+
+Build the attached BEEZ.zip as a landing page website. Use the React, TypeScript, and Vite frontend in the frontend folder. Keep the Home, Offer, Vision, Features, FAQ, Trust, Built on, and Problem pages with their hash routes. Leave out the Spring Boot backend, Docker, and nginx files, and leave out the node_modules folders. Keep the existing copy and placeholder links (app.beez.example and hello@beez.example) for now.
 
 This project was built with [Lovable](https://lovable.dev).
 
 ## Build with Lovable
 
-Open your project in the [Lovable editor](https://lovable.dev) and keep building.
+Continue developing this project in the [Lovable editor](https://lovable.dev/projects/d8cc25eb-1128-4646-92e2-55c2cd1778dc).
 
 - **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: connect the project to GitHub and every change made in Lovable is committed straight to your repository.
-- **Full ownership**: this code is yours. Push to your repository and your changes sync back into Lovable, ready for your next prompt.
+- **Stay in sync**: every change made in Lovable is committed straight to this repository.
+- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
 
 ## Development
 
@@ -20,10 +22,3 @@ cd <repository-name>
 npm i
 npm run dev
 ```
-
-## Built with
-
-- TanStack Start
-- TypeScript
-- React
-- Tailwind CSS
