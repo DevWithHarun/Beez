@@ -280,7 +280,7 @@ html{scroll-padding-top:66px}
 .stage-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
 .stage-card{position:relative;min-height:120px;padding:11px 12px 10px;border:1px solid rgba(153,169,183,.24);border-radius:13px;background:linear-gradient(140deg,rgba(51,64,76,.76),rgba(23,31,44,.95));box-shadow:inset 0 1px 1px rgba(255,255,255,.09)}
 .stage-number{color:#d5c9b2;font-size:19px}
-.stage-card svg{position:absolute;top:10px;right:10px;width:25px;height:25px;fill:none;stroke:#75cc93;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.stage-photo{display:block;width:100%;aspect-ratio:16/10;height:auto;object-fit:cover;border-radius:6px;margin:7px 0 10px}.stage-card{border-radius:8px}.stage-card h4{color:var(--ink);line-height:1.3}.stage-card p{color:var(--mut);line-height:1.4}
 .stage-card h4{margin:2px 0;color:#f0eee9;font-size:14px;font-weight:550;line-height:1.15}
 .stage-card p{margin:0;color:#d3d3d2;font-size:12px;line-height:1.2}
 .stage-card:nth-child(n+5){grid-row:2}
@@ -436,3 +436,15 @@ html{scroll-padding-top:66px}
   .merchant-problem .pcard .ico{height:115px}
   .merchant-problem .ans{margin-right:-16px;margin-left:-16px;padding-right:16px;padding-left:16px}
 }
+
+/* Vision world map colors are shared by the map renderer and its UI. */
+:root{--map-water:#17232e;--map-land:#34443f;--map-road:#4c5954;--map-label:#a8b5b0;--map-target:#8ed4aa;--map-popup-ink:#202824}
+.mission-map .map{padding:0;overflow:hidden;background:var(--map-water);border-color:var(--line);border-radius:8px}
+.world-map-canvas{width:100%;height:360px;background:var(--map-water)}
+.map-message{display:flex;align-items:center;justify-content:center;position:absolute;inset:0;margin:0;padding:24px;color:var(--mut);text-align:center;pointer-events:none}
+.mission-map .legend{position:static;flex-direction:row;flex-wrap:wrap;gap:8px 20px;margin:0;padding:12px 14px;border:0;border-top:1px solid var(--line);border-radius:0;background:var(--card);color:var(--ink)}
+.mission-map .legend .k:not(.now){border-color:var(--map-target)}
+.expansion-info{color:var(--map-popup-ink);font:14px system-ui,sans-serif;line-height:1.5;padding:4px 0}
+.expansion-info strong{display:block;font-size:16px}
+.stage-card:nth-child(6) .stage-photo{object-position:right center}
+@media(max-width:700px){.world-map-canvas{height:320px}.stage-card h4{font-size:14px}.stage-card p{line-height:1.4}.mission-map .legend{font-size:12px}}
