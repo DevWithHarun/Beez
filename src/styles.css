@@ -93,7 +93,7 @@ h2{font-size:clamp(26px,5vw,38px);line-height:1.15;margin:0 0 10px;letter-spacin
 .pimg .sm{font:500 8px system-ui,sans-serif;fill:var(--mut)}
 .band{background:var(--ysoft);border-radius:20px;padding:44px 24px;text-align:center;margin:24px 0}
 .band h2{margin-bottom:18px}
-footer{border-top:1px solid var(--line);padding:24px 0 32px;color:var(--mut);font-size:14px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+footer{border-top:1px solid var(--line);padding:32px 0 28px;color:var(--mut);font-size:14px}
 .ln svg *{stroke:var(--yd);stroke-width:2.2;fill:none;stroke-linecap:round;stroke-linejoin:round}
 .ln svg .fy{fill:var(--ysoft)}
 .tiles{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
