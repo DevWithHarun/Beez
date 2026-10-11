@@ -7,13 +7,7 @@ export default function SiteFooter() {
       <div className="fc">
         <div className="fbrand">
           <a className="flogo" href="#/" aria-label="Beez home">
-            <svg viewBox="0 0 48 48" aria-hidden="true">
-              <path d="M24 8c-7 0-12 6-12 14 0 9 6 15 12 18 6-3 12-9 12-18 0-8-5-14-12-14Z" />
-              <path d="M13 18h22M12 25h24M15 32h18" />
-              <path d="M19 8c0-4 3-6 5-6s5 2 5 6" />
-              <path d="m11 13-5-4m31 4 5-4M9 21H4m40 0h-5" />
-            </svg>
-            <span>Beez</span>
+            <img src="/beez-logo.png" alt="" aria-hidden="true" />
           </a>
           <p>Smart tools. Real growth.</p>
           <p>Mombasa, Kenya</p>

@@ -152,8 +152,8 @@ a{color:inherit}
 .fc h4{margin:4px 0 8px;font-size:12px;font-weight:750;letter-spacing:.04em;text-transform:uppercase;color:#f2d27d;text-shadow:0 0 12px rgba(245,189,57,.3)}.fc a{display:block;text-decoration:none;color:#aeb3bd;font-size:13px;padding:2px 0;transition:color .15s}
 .fc a:hover{color:var(--yd)}
 .fbrand{display:flex;flex-direction:column;gap:3px}
-.flogo{display:inline-flex;align-items:center;gap:8px;color:#f1f1f2;text-decoration:none;font-size:24px;font-weight:750;letter-spacing:-1px;margin-bottom:5px}
-.flogo svg{width:30px;height:30px;fill:var(--y);stroke:var(--y);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.flogo{display:inline-flex;align-items:center;width:136px;margin-bottom:5px}
+.flogo img{display:block;width:100%;height:auto;border-radius:4px}
 .fbrand p{margin:0;color:#f0d28a;font-size:13px}
 .fbrand p+p{color:#e0e2e6}
 .fbrand a{display:inline-block;padding:3px 0 0}
@@ -174,10 +174,8 @@ html{background:#111824}
 body{min-width:320px;background:radial-gradient(ellipse at 79% 77%,rgba(103,107,47,.25),transparent 34%),radial-gradient(ellipse at 69% 69%,rgba(16,91,83,.2),transparent 34%),linear-gradient(116deg,#111824 0%,#121a25 57%,#172121 100%);color:#f0eee9}
 .w{width:100%;max-width:none;padding:0}
 .site-nav{height:66px;padding:0 5.6%;border-bottom:1px solid rgba(218,224,231,.12);display:flex;align-items:center;justify-content:space-between}
-.brand{display:inline-flex;align-items:center;gap:8px;color:#eef0f3;text-decoration:none;font-size:28px;font-weight:750;letter-spacing:-1.2px}
-.brand svg{width:35px;height:35px;fill:#f5bd39;stroke:#f5bd39;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.brand svg path:first-child{fill:#f5bd39}
-.brand svg path:not(:first-child){fill:none;stroke:#26313b}
+.brand{display:inline-flex;align-items:center;text-decoration:none}
+.brand-image{display:block;width:136px;height:auto;border-radius:4px}
 .nav-links{display:flex;align-items:center;gap:26px}
 .nav-links>a:not(.nav-cta){color:#e1e3e7;text-decoration:none;font-size:15px;font-weight:450}
 .nav-links>a:not(.nav-cta):hover{color:#f5bd39}
