@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beez Production Architecture</title>
+<style>
+:root{--bg:#fffdf7;--card:#ffffff;--ink:#1c1b18;--mut:#5f5c53;--line:#e8e3d3;--y:#f5b50a;--yd:#7a5600;--soft:#fff4d1;--code:#f4f1e6}
+@media (prefers-color-scheme:dark){:root{--bg:#15140f;--card:#201e17;--ink:#f6f3e8;--mut:#b5b09f;--line:#38352a;--yd:#f5c84a;--soft:#2c2506;--code:#1b1a14}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:1100px;margin:0 auto;padding:0 20px;display:grid;gap:32px;grid-template-columns:1fr}
+@media(min-width:960px){.wrap{grid-template-columns:250px 1fr}}
+nav.toc{font-size:14px;padding:20px 0}
+@media(min-width:960px){nav.toc{position:sticky;top:0;align-self:start;max-height:100vh;overflow:auto}}
+nav.toc b{display:block;margin-bottom:8px}
+nav.toc a{display:block;color:var(--mut);text-decoration:none;padding:3px 0}
+nav.toc a:hover{color:var(--yd)}
+header.top{padding:32px 0 8px}
+.badge{display:inline-block;background:var(--soft);color:var(--yd);font-weight:700;font-size:13px;padding:4px 12px;border-radius:999px}
+h1{font-size:clamp(28px,5vw,42px);line-height:1.1;margin:12px 0 8px;letter-spacing:-1px}
+h2{font-size:26px;margin:44px 0 10px;padding-top:12px;border-top:3px solid var(--y);letter-spacing:-.5px}
+h3{font-size:19px;margin:26px 0 6px}
+p{margin:10px 0}
+li{margin:4px 0}
+code{background:var(--code);padding:1px 6px;border-radius:5px;font-size:.9em;font-family:ui-monospace,Menlo,Consolas,monospace}
+pre{background:var(--code);border:1px solid var(--line);border-radius:12px;padding:14px;overflow-x:auto;font-size:13px;line-height:1.5;margin:12px 0}
+pre code{background:none;padding:0}
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14.5px;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:var(--soft)}
+.note{background:var(--soft);border-left:5px solid var(--y);border-radius:8px;padding:10px 14px;margin:14px 0}
+.warn{background:var(--card);border:1px solid var(--line);border-left:5px solid #c0392b;border-radius:8px;padding:10px 14px;margin:14px 0}
+.mut{color:var(--mut)}
+@media print{nav.toc{display:none}.wrap{display:block}h2{break-after:avoid}pre{white-space:pre-wrap}}
+
+.wrap>*{min-width:0}.dg{margin:18px 0}.sc{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--card);padding:6px}.dg svg{display:block;width:100%;height:auto}
+.dg figcaption{color:var(--mut);font-size:13px;margin-top:6px;text-align:center}
+svg .bx{fill:var(--card);stroke:var(--line);stroke-width:1.5}svg .bxy{fill:var(--soft);stroke:var(--y);stroke-width:1.5}svg .bxg{fill:var(--card);stroke:var(--y);stroke-width:3}
+svg .tx{fill:var(--ink);font:700 13px system-ui,sans-serif}svg .tx2{fill:var(--ink);font:700 11.5px system-ui,sans-serif}svg .ts{fill:var(--mut);font:11.5px system-ui,sans-serif}
+svg .lb{fill:var(--ink);font:600 11.5px system-ui,sans-serif;paint-order:stroke;stroke:var(--card);stroke-width:5px;stroke-linejoin:round}
+svg .ar{stroke:var(--yd);stroke-width:1.6;fill:none}svg .dsh{stroke-dasharray:5 4}
+svg .ll{stroke:var(--line);stroke-width:1.5;stroke-dasharray:4 4}
+svg .nt{fill:var(--soft);stroke:var(--y);stroke-width:1}
+svg .ctn{fill:none;stroke:var(--line);stroke-width:1.5;stroke-dasharray:6 4}
+svg .hd{fill:var(--yd);font:800 12px system-ui,sans-serif;letter-spacing:.5px}
+.glance{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin:16px 0}
+.glance div{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px}
+.glance b{display:block;color:var(--yd)}
+@media print{.sc{overflow:visible}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav class="toc" aria-label="Contents"><b>Contents</b><a href="#s1">1. Scope and product summary</a><a href="#s2">2. System architecture</a><a href="#s3">3. App shell and tabs</a><a href="#s4">4. Domain model</a><a href="#s5">5. State machines</a><a href="#s6">6. The multi-vendor basket</a><a href="#s7">7. Checkout and payment</a><a href="#s8">8. Delivery and dispatch</a><a href="#s9">9. Wallet and withdrawals</a><a href="#s10">10. Authentication and authorization</a><a href="#s11">11. Voice pipeline</a><a href="#s12">12. Notifications</a><a href="#s13">13. API catalogue</a><a href="#s14">14. Admin console</a><a href="#s15">15. Infrastructure and deployment</a><a href="#s16">16. Observability and operations</a><a href="#s17">17. Security and privacy</a><a href="#s18">18. Testing strategy</a><a href="#s19">19. Roadmap</a><a href="#s20">20. Open decisions and risks</a><a href="#s21">21. Glossary</a></nav>
+<main>
+<header class="top">
+<span class="badge">Beez | Production architecture | Version 1.0</span>
+<h1>Beez Production Architecture</h1>
+<p class="mut">The complete design for the Beez app for customers, merchants, riders and admins: tabs and screens, multi-shop baskets, M-Pesa checkout, delivery, wallet and withdrawals, authentication, voice, infrastructure and operations. It merges and replaces the earlier MVP architecture, the authentication specification, and the account and dashboard flow document.</p>
+</header>
+<div class="glance">
+<div><b>Four launch tabs</b>Discover, Track, Sell, Ride, plus a separate admin console</div>
+<div><b>One basket, many shops</b>One payment, one rider, one delivery code</div>
+<div><b>Ledger-based money</b>Balances are sums of entries. Withdrawals are held, paid, or released</div>
+<div><b>Phone-code sign-in</b>No passwords for merchants and riders. Guests need no account</div>
+<div><b>Voice first</b>Products and onboarding by speaking, with typing always available</div>
+<div><b>Modular monolith</b>One Spring Boot app, PostgreSQL, Redis, object storage</div>
+</div>
+<div class="note"><b>How to read this.</b> Sections 1 to 3 explain the product and how the tabs work together. Sections 4 to 9 define the data and the money flows. Section 10 is the full authentication design. Sections 11 to 14 cover voice, alerts, the API and the admin console. Sections 15 to 21 cover deployment, operations, security, testing, the roadmap and open decisions. Every diagram is drawn in the page and adapts to light and dark mode.</div>
+<h2 id="s1">1. Scope and product summary</h2>
+<p>Beez is voice-first commerce infrastructure for street vendors and small shops. Customers shop from <b>several vendors in one basket</b>, pay once with M-Pesa, and one rider collects everything and delivers it. Merchants and riders earn money inside Beez and <b>withdraw</b> it to M-Pesa. Every sale, payment and delivery is recorded, which builds the verified history that later supports financial services.</p>
+<p>This document is the single production architecture. It merges and replaces the earlier MVP architecture, the authentication specification, and the account and dashboard flow document, and adds the multi-vendor basket and the wallet and withdrawal system.</p>
+<table>
+<tr><th>Area</th><th>What the product does</th><th>Section</th></tr>
+<tr><td>App shell</td><td>Launch page with four tabs: Discover, Track, Sell, Ride. Separate admin console</td><td>3</td></tr>
+<tr><td>Catalogue and voice</td><td>Shop pages, products added by voice or by hand, intro video</td><td>11</td></tr>
+<tr><td>Multi-vendor basket</td><td>One basket, many shops, one payment, one rider with several stops</td><td>5, 6, 7</td></tr>
+<tr><td>Payments</td><td>M-Pesa STK Push, callbacks, reconciliation, refunds</td><td>7</td></tr>
+<tr><td>Delivery</td><td>Dispatch, multi-stop jobs, delivery code, live tracking</td><td>8</td></tr>
+<tr><td>Wallet and withdrawals</td><td>Double-entry ledger, balances, withdrawal requests, admin payout, later automatic payout</td><td>9</td></tr>
+<tr><td>Authentication</td><td>Phone and SMS code for merchants and riders, capability links for guests, password and authenticator for admins</td><td>10</td></tr>
+<tr><td>Operations</td><td>Admin console, notifications, monitoring, deployment, security, testing</td><td>12 to 18</td></tr>
+</table>
+<h3>1.1 Roles</h3>
+<table>
+<tr><th>Role</th><th>Account</th><th>Enters through</th><th>Main goal</th></tr>
+<tr><td>Customer</td><td>None (guest)</td><td>Discover and Track tabs, shop links</td><td>Buy from several shops and get one delivery</td></tr>
+<tr><td>Merchant</td><td>Phone and SMS code</td><td>Sell tab</td><td>Take orders, prepare goods, get paid</td></tr>
+<tr><td>Rider</td><td>Phone and SMS code, approved by admin</td><td>Ride tab</td><td>Collect and deliver, get paid</td></tr>
+<tr><td>Admin</td><td>Email, password, authenticator</td><td>/admin</td><td>Approve, monitor, settle, refund</td></tr>
+</table>
+<h3>1.2 Not in scope yet</h3>
+<p>Credit scoring, loans, merchant financing, inventory forecasting and AI business advice. The data model keeps the records those features need, so they can be added without redesign.</p>
+<h2 id="s2">2. System architecture</h2>
+<p>Beez is a <b>modular monolith</b>: one deployable Java application with clearly separated modules, one PostgreSQL database, and a small set of managed services around it. For a team of one to five engineers this gives the speed of a single codebase with clean seams, so a module can be extracted into its own service later if one ever needs to scale alone.</p><figure class="dg"><div class="sc"><svg viewBox="0 0 760 516" style="min-width:640px" role="img" aria-label="Figure 1. Production system architecture: clients, edge, API modules, data stores and external services"><defs><marker id="mk1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1L9 5L1 9" fill="none" stroke="var(--yd)" stroke-width="1.8"/></marker></defs><rect class="ctn" x="8" y="4" width="744" height="78" rx="14"/><text class="hd" x="20" y="22">CLIENTS: one installable web app (PWA) plus admin console</text><rect class="bx" x="20" y="28" width="168" height="46" rx="10"/><text class="tx" x="104.0" y="48.0" text-anchor="middle">Customer</text><text class="ts" x="104.0" y="64.0" text-anchor="middle">Discover and Track tabs</text><rect class="bx" x="202" y="28" width="168" height="46" rx="10"/><text class="tx" x="286.0" y="48.0" text-anchor="middle">Merchant</text><text class="ts" x="286.0" y="64.0" text-anchor="middle">Sell tab</text><rect class="bx" x="384" y="28" width="168" height="46" rx="10"/><text class="tx" x="468.0" y="48.0" text-anchor="middle">Rider</text><text class="ts" x="468.0" y="64.0" text-anchor="middle">Ride tab</text><rect class="bx" x="566" y="28" width="168" height="46" rx="10"/><text class="tx" x="650.0" y="48.0" text-anchor="middle">Admin console</text><text class="ts" x="650.0" y="64.0" text-anchor="middle">/admin</text><path class="ar" d="M104 74L104 98" marker-end="url(#mk1)"/><path class="ar" d="M286 74L286 98" marker-end="url(#mk1)"/><path class="ar" d="M468 74L468 98" marker-end="url(#mk1)"/><path class="ar" d="M650 74L650 98" marker-end="url(#mk1)"/><rect class="bxy" x="20" y="98" width="720" height="34" rx="10"/><text class="tx" x="380.0" y="120.0" text-anchor="middle">Edge: CDN, TLS, WAF, rate limiting (Cloudflare or Caddy)</text><path class="ar" d="M380 132L380 152" marker-end="url(#mk1)"/><rect class="ctn" x="8" y="150" width="744" height="176" rx="14"/><text class="hd" x="20" y="168">BEEZ API: modular monolith, stateless, 2 or more instances</text><rect class="bx" x="20" y="176" width="134" height="44" rx="10"/><text class="tx" x="87.0" y="195.0" text-anchor="middle">Auth</text><text class="ts" x="87.0" y="211.0" text-anchor="middle">OTP, tokens, roles</text><rect class="bx" x="164" y="176" width="134" height="44" rx="10"/><text class="tx" x="231.0" y="195.0" text-anchor="middle">Catalogue</text><text class="ts" x="231.0" y="211.0" text-anchor="middle">Shops, products</text><rect class="bx" x="308" y="176" width="134" height="44" rx="10"/><text class="tx" x="375.0" y="195.0" text-anchor="middle">Voice</text><text class="ts" x="375.0" y="211.0" text-anchor="middle">Speech to products</text><rect class="bx" x="452" y="176" width="134" height="44" rx="10"/><text class="tx" x="519.0" y="195.0" text-anchor="middle">Basket and orders</text><text class="ts" x="519.0" y="211.0" text-anchor="middle">Baskets, sub-orders</text><rect class="bx" x="596" y="176" width="134" height="44" rx="10"/><text class="tx" x="663.0" y="195.0" text-anchor="middle">Payments</text><text class="ts" x="663.0" y="211.0" text-anchor="middle">M-Pesa, refunds</text><rect class="bx" x="20" y="230" width="134" height="44" rx="10"/><text class="tx" x="87.0" y="249.0" text-anchor="middle">Dispatch</text><text class="ts" x="87.0" y="265.0" text-anchor="middle">Jobs, stops, tracking</text><rect class="bx" x="164" y="230" width="134" height="44" rx="10"/><text class="tx" x="231.0" y="249.0" text-anchor="middle">Wallet</text><text class="ts" x="231.0" y="265.0" text-anchor="middle">Ledger, withdrawals</text><rect class="bx" x="308" y="230" width="134" height="44" rx="10"/><text class="tx" x="375.0" y="249.0" text-anchor="middle">Notifications</text><text class="ts" x="375.0" y="265.0" text-anchor="middle">Push, SMS, voice</text><rect class="bx" x="452" y="230" width="134" height="44" rx="10"/><text class="tx" x="519.0" y="249.0" text-anchor="middle">Admin</text><text class="ts" x="519.0" y="265.0" text-anchor="middle">Approvals, ops</text><rect class="bxy" x="596" y="230" width="134" height="44" rx="10"/><text class="tx" x="663.0" y="249.0" text-anchor="middle">Jobs</text><text class="ts" x="663.0" y="265.0" text-anchor="middle">Schedulers, outbox</text><text class="ts" x="380" y="304" text-anchor="middle">Modules call each other through service interfaces, never through each other's tables</text><path class="ar" d="M380 326L380 346" marker-end="url(#mk1)"/><rect class="bx" x="20" y="346" width="168" height="46" rx="10"/><text class="tx" x="104.0" y="366.0" text-anchor="middle">PostgreSQL</text><text class="ts" x="104.0" y="382.0" text-anchor="middle">Primary and replica</text><rect class="bx" x="202" y="346" width="168" height="46" rx="10"/><text class="tx" x="286.0" y="366.0" text-anchor="middle">Redis</text><text class="ts" x="286.0" y="382.0" text-anchor="middle">Limits, cache, locks</text><rect class="bx" x="384" y="346" width="168" height="46" rx="10"/><text class="tx" x="468.0" y="366.0" text-anchor="middle">Object storage</text><text class="ts" x="468.0" y="382.0" text-anchor="middle">Video, audio, images</text><rect class="bx" x="566" y="346" width="168" height="46" rx="10"/><text class="tx" x="650.0" y="366.0" text-anchor="middle">Backups</text><text class="ts" x="650.0" y="382.0" text-anchor="middle">Encrypted, off site</text><path class="ar" d="M380 392L380 414" marker-end="url(#mk1)"/><text class="ts" x="380" y="410" text-anchor="middle"></text><rect class="ctn" x="8" y="412" width="744" height="92" rx="14"/><text class="hd" x="20" y="430">EXTERNAL SERVICES (each behind an interface)</text><rect class="bx" x="20" y="436" width="113" height="46" rx="10"/><text class="tx" x="76.5" y="456.0" text-anchor="middle">M-Pesa</text><text class="ts" x="76.5" y="472.0" text-anchor="middle">Daraja API</text><rect class="bx" x="141" y="436" width="113" height="46" rx="10"/><text class="tx" x="197.5" y="456.0" text-anchor="middle">SMS and voice</text><text class="ts" x="197.5" y="472.0" text-anchor="middle">Africa's Talking</text><rect class="bx" x="262" y="436" width="113" height="46" rx="10"/><text class="tx" x="318.5" y="456.0" text-anchor="middle">Web Push</text><text class="ts" x="318.5" y="472.0" text-anchor="middle">VAPID</text><rect class="bx" x="383" y="436" width="113" height="46" rx="10"/><text class="tx" x="439.5" y="456.0" text-anchor="middle">Speech to text</text><text class="ts" x="439.5" y="472.0" text-anchor="middle">Swahili, English</text><rect class="bx" x="504" y="436" width="113" height="46" rx="10"/><text class="tx" x="560.5" y="456.0" text-anchor="middle">LLM</text><text class="ts" x="560.5" y="472.0" text-anchor="middle">Extraction</text><rect class="bx" x="625" y="436" width="113" height="46" rx="10"/><text class="tx" x="681.5" y="456.0" text-anchor="middle">Maps</text><text class="ts" x="681.5" y="472.0" text-anchor="middle">OpenStreetMap</text></svg></div><figcaption>Figure 1. Production system architecture: clients, edge, API modules, data stores and external services</figcaption></figure>
+<h3>2.1 Design principles</h3>
+<ol>
+<li><b>Money is a ledger.</b> Balances are never stored as a single editable number. They are computed from immutable ledger entries.</li>
+<li><b>One payment, many parts.</b> A basket is paid once and split into per-shop and per-rider amounts by the ledger.</li>
+<li><b>Server owns the truth.</b> Prices, totals, fees, roles and statuses are decided on the server for every request.</li>
+<li><b>Idempotent everything.</b> Payment callbacks, withdrawals and status changes can be repeated safely.</li>
+<li><b>Voice first, text always available.</b> Every screen works for people who struggle with reading, and every voice step has a typing fallback.</li>
+<li><b>Replaceable providers.</b> Payments, SMS, speech, language model, maps and storage sit behind interfaces.</li>
+<li><b>Observable by default.</b> Every order, payment and withdrawal can be traced end to end by an ID.</li>
+<li><b>Boring technology.</b> Proven tools that one developer can run at 2 a.m.</li>
+</ol>
+<h3>2.2 Technology stack</h3>
+<table>
+<tr><th>Layer</th><th>Choice</th><th>Why</th></tr>
+<tr><td>Language and framework</td><td>Java 21, Spring Boot 3 (Web, Security, Validation, Data JPA, Actuator)</td><td>Mature, strong typing, fits the team</td></tr>
+<tr><td>Database</td><td>PostgreSQL 16, Flyway migrations</td><td>Transactions and constraints protect money data</td></tr>
+<tr><td>Cache and limits</td><td>Redis</td><td>Rate limits, short-lived locks, shared cache across instances</td></tr>
+<tr><td>Object storage</td><td>S3-compatible (Cloudflare R2, Backblaze B2, or AWS S3)</td><td>Video, audio and images via signed URLs</td></tr>
+<tr><td>Client</td><td>React, TypeScript, Vite, Workbox service worker</td><td>One PWA codebase for customer, merchant and rider</td></tr>
+<tr><td>Admin console</td><td>Same codebase, separate route group and bundle</td><td>Shared components, separate access</td></tr>
+<tr><td>Payments</td><td>Safaricom Daraja (STK Push, callbacks, status query, later B2C), behind <code>PaymentProvider</code></td><td>The rail users already use</td></tr>
+<tr><td>Messaging</td><td>Africa's Talking (SMS and voice), Web Push, behind <code>NotificationChannel</code></td><td>Reliable in Kenya</td></tr>
+<tr><td>Speech and language</td><td>Hosted speech-to-text and an LLM with JSON output, behind interfaces</td><td>Swappable as quality improves</td></tr>
+<tr><td>Maps</td><td>Leaflet and OpenStreetMap, browser geolocation, map links</td><td>Free, light on data</td></tr>
+<tr><td>Hosting</td><td>Containers on a managed platform or VPS, GitHub Actions CI/CD</td><td>See Section 15</td></tr>
+<tr><td>Observability</td><td>Structured JSON logs, Prometheus metrics, Grafana, Sentry, uptime checks</td><td>See Section 16</td></tr>
+</table>
+<h3>2.3 Module responsibilities</h3>
+<table>
+<tr><th>Module</th><th>Owns</th><th>Talks to</th></tr>
+<tr><td>Auth</td><td>Users, OTP, tokens, sessions, roles, admin MFA</td><td>Notifications (SMS), Redis (limits)</td></tr>
+<tr><td>Catalogue</td><td>Merchants, shop pages, products, media, market zones</td><td>Voice, Object storage</td></tr>
+<tr><td>Voice</td><td>Voice uploads, transcripts, extracted drafts</td><td>Speech to text, LLM, Catalogue</td></tr>
+<tr><td>Basket and orders</td><td>Baskets, vendor orders, items, pricing, delivery fee, order state</td><td>Catalogue, Payments, Dispatch, Wallet</td></tr>
+<tr><td>Payments</td><td>Payment attempts, callbacks, reconciliation, refunds</td><td>M-Pesa, Basket and orders, Wallet</td></tr>
+<tr><td>Dispatch</td><td>Riders, availability, deliveries, stops, offers, codes, tracking</td><td>Basket and orders, Notifications</td></tr>
+<tr><td>Wallet</td><td>Ledger, balances, withdrawals, settlements</td><td>Payments, Admin, M-Pesa (later)</td></tr>
+<tr><td>Notifications</td><td>Alerts, templates, delivery tracking, fallbacks</td><td>Web Push, SMS provider</td></tr>
+<tr><td>Admin</td><td>Approvals, monitoring, manual actions, audit log, metrics</td><td>All modules through service interfaces</td></tr>
+</table>
+<h2 id="s3">3. App shell and how the tabs interact</h2>
+<p>The app opens on the launch page with four tabs. Each tab serves one kind of person. Two are open to guests, two need an account.</p><figure class="dg"><div class="sc"><svg viewBox="0 0 760 432" style="min-width:640px" role="img" aria-label="Figure 2. The four launch tabs and the screens inside each role"><defs><marker id="mk2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1L9 5L1 9" fill="none" stroke="var(--yd)" stroke-width="1.8"/></marker></defs><rect class="bxy" x="20" y="8" width="720" height="34" rx="10"/><text class="tx" x="380.0" y="30.0" text-anchor="middle">LAUNCH PAGE: four tabs at the bottom of the screen</text><path class="ar" d="M104 42L104 58" marker-end="url(#mk2)"/><rect class="bxy" x="20" y="58" width="168" height="42" rx="10"/><text class="tx" x="104.0" y="76.0" text-anchor="middle">Discover</text><text class="ts" x="104.0" y="92.0" text-anchor="middle">Customer, guest</text><rect class="bx" x="24" y="112" width="160" height="36" rx="10"/><text class="tx" x="104.0" y="135.0" text-anchor="middle">Shops and search</text><rect class="bx" x="24" y="158" width="160" height="36" rx="10"/><text class="tx" x="104.0" y="181.0" text-anchor="middle">Basket, many shops</text><rect class="bx" x="24" y="204" width="160" height="36" rx="10"/><text class="tx" x="104.0" y="227.0" text-anchor="middle">Checkout, M-Pesa</text><path class="ar" d="M286 42L286 58" marker-end="url(#mk2)"/><rect class="bxy" x="202" y="58" width="168" height="42" rx="10"/><text class="tx" x="286.0" y="76.0" text-anchor="middle">Track</text><text class="ts" x="286.0" y="92.0" text-anchor="middle">Customer, guest</text><rect class="bx" x="206" y="112" width="160" height="36" rx="10"/><text class="tx" x="286.0" y="135.0" text-anchor="middle">Order timeline</text><rect class="bx" x="206" y="158" width="160" height="36" rx="10"/><text class="tx" x="286.0" y="181.0" text-anchor="middle">Delivery code</text><rect class="bx" x="206" y="204" width="160" height="36" rx="10"/><text class="tx" x="286.0" y="227.0" text-anchor="middle">Recent orders</text><path class="ar" d="M468 42L468 58" marker-end="url(#mk2)"/><rect class="bxy" x="384" y="58" width="168" height="42" rx="10"/><text class="tx" x="468.0" y="76.0" text-anchor="middle">Sell</text><text class="ts" x="468.0" y="92.0" text-anchor="middle">Merchant, account</text><rect class="bx" x="388" y="112" width="160" height="36" rx="10"/><text class="tx" x="468.0" y="135.0" text-anchor="middle">Home</text><rect class="bx" x="388" y="158" width="160" height="36" rx="10"/><text class="tx" x="468.0" y="181.0" text-anchor="middle">Orders</text><rect class="bx" x="388" y="204" width="160" height="36" rx="10"/><text class="tx" x="468.0" y="227.0" text-anchor="middle">Products</text><rect class="bx" x="388" y="250" width="160" height="36" rx="10"/><text class="tx" x="468.0" y="273.0" text-anchor="middle">Shop</text><rect class="bx" x="388" y="296" width="160" height="36" rx="10"/><text class="tx" x="468.0" y="319.0" text-anchor="middle">Earnings, Withdraw</text><path class="ar" d="M650 42L650 58" marker-end="url(#mk2)"/><rect class="bxy" x="566" y="58" width="168" height="42" rx="10"/><text class="tx" x="650.0" y="76.0" text-anchor="middle">Ride</text><text class="ts" x="650.0" y="92.0" text-anchor="middle">Rider, account</text><rect class="bx" x="570" y="112" width="160" height="36" rx="10"/><text class="tx" x="650.0" y="135.0" text-anchor="middle">Jobs</text><rect class="bx" x="570" y="158" width="160" height="36" rx="10"/><text class="tx" x="650.0" y="181.0" text-anchor="middle">Active delivery</text><rect class="bx" x="570" y="204" width="160" height="36" rx="10"/><text class="tx" x="650.0" y="227.0" text-anchor="middle">Earnings, Withdraw</text><rect class="bx" x="570" y="250" width="160" height="36" rx="10"/><text class="tx" x="650.0" y="273.0" text-anchor="middle">Profile</text><rect class="bxy" x="20" y="350" width="720" height="50" rx="10"/><text class="tx" x="380.0" y="372.0" text-anchor="middle">Admin console (/admin), a separate sign-in</text><text class="ts" x="380.0" y="388.0" text-anchor="middle">Overview · Approvals · Orders · Payments · Withdrawals · Ledger · Refunds · Users · Metrics · Audit log</text><text class="ts" x="380" y="420" text-anchor="middle">Admin is a separate sign-in, not a tab. Sell and Ride show their dashboard when signed in, and a sign-in page when not.</text></svg></div><figcaption>Figure 2. The four launch tabs and the screens inside each role</figcaption></figure>
+<h3>3.1 How the tabs work together</h3>
+<p>A single purchase touches every role. The tabs do not call each other directly. They react to events from the server, so each person always sees the current state.</p><figure class="dg"><div class="sc"><svg viewBox="0 0 760 212" style="min-width:700px" role="img" aria-label="Figure 3. One purchase across the tabs, from basket to withdrawal"><defs><marker id="mk3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1L9 5L1 9" fill="none" stroke="var(--yd)" stroke-width="1.8"/></marker></defs><rect class="bxy" x="14" y="14" width="132" height="54" rx="10"/><text class="tx" x="80.0" y="38.0" text-anchor="middle">Add items</text><text class="ts" x="80.0" y="54.0" text-anchor="middle">Customer, Discover</text><path class="ar" d="M146 41L162 41" marker-end="url(#mk3)"/><rect class="bxy" x="162" y="14" width="132" height="54" rx="10"/><text class="tx" x="228.0" y="38.0" text-anchor="middle">Pay once</text><text class="ts" x="228.0" y="54.0" text-anchor="middle">Customer, Checkout</text><path class="ar" d="M294 41L310 41" marker-end="url(#mk3)"/><rect class="bx" x="310" y="14" width="132" height="54" rx="10"/><text class="tx" x="376.0" y="38.0" text-anchor="middle">Shops alerted</text><text class="ts" x="376.0" y="54.0" text-anchor="middle">Sell, Orders tab</text><path class="ar" d="M442 41L458 41" marker-end="url(#mk3)"/><rect class="bx" x="458" y="14" width="132" height="54" rx="10"/><text class="tx" x="524.0" y="38.0" text-anchor="middle">Parts ready</text><text class="ts" x="524.0" y="54.0" text-anchor="middle">Sell, mark ready</text><path class="ar" d="M590 41L606 41" marker-end="url(#mk3)"/><rect class="bx" x="606" y="14" width="132" height="54" rx="10"/><text class="tx" x="672.0" y="38.0" text-anchor="middle">Job offered</text><text class="ts" x="672.0" y="54.0" text-anchor="middle">Ride, Jobs tab</text><rect class="bx" x="14" y="106" width="132" height="54" rx="10"/><text class="tx" x="80.0" y="130.0" text-anchor="middle">Collect stops</text><text class="ts" x="80.0" y="146.0" text-anchor="middle">Ride, Active tab</text><path class="ar" d="M146 133L162 133" marker-end="url(#mk3)"/><rect class="bxy" x="162" y="106" width="132" height="54" rx="10"/><text class="tx" x="228.0" y="130.0" text-anchor="middle">Live progress</text><text class="ts" x="228.0" y="146.0" text-anchor="middle">Customer, Track</text><path class="ar" d="M294 133L310 133" marker-end="url(#mk3)"/><rect class="bx" x="310" y="106" width="132" height="54" rx="10"/><text class="tx" x="376.0" y="130.0" text-anchor="middle">Delivered</text><text class="ts" x="376.0" y="146.0" text-anchor="middle">Ride, enter code</text><path class="ar" d="M442 133L458 133" marker-end="url(#mk3)"/><rect class="bx" x="458" y="106" width="132" height="54" rx="10"/><text class="tx" x="524.0" y="130.0" text-anchor="middle">Money credited</text><text class="ts" x="524.0" y="146.0" text-anchor="middle">Sell and Ride tabs</text><path class="ar" d="M590 133L606 133" marker-end="url(#mk3)"/><rect class="bxg" x="606" y="106" width="132" height="54" rx="10"/><text class="tx" x="672.0" y="130.0" text-anchor="middle">Withdraw, paid</text><text class="ts" x="672.0" y="146.0" text-anchor="middle">Admin, Withdrawals</text><path class="ar" d="M672 68V88H80V106" marker-end="url(#mk3)"/><text class="ts" x="380" y="64" text-anchor="middle"></text><text class="ts" x="380" y="196" text-anchor="middle">Yellow fill: customer. Plain: merchants and rider. Thick outline: admin. The curved line shows the flow continuing on the second row.</text></svg></div><figcaption>Figure 3. One purchase across the tabs, from basket to withdrawal</figcaption></figure>
+<table>
+<tr><th>Event on the server</th><th>Customer tabs</th><th>Merchant (Sell)</th><th>Rider (Ride)</th><th>Admin</th></tr>
+<tr><td>Basket paid</td><td>Track shows "Paid" and the delivery code</td><td>Orders: new order for each shop, push and SMS alert</td><td>Nothing yet</td><td>Payments list updates</td></tr>
+<tr><td>Shop marks its part ready</td><td>Track: that shop shows "Ready"</td><td>Order moves to Ready</td><td>When all shops are ready, a job appears in Jobs</td><td>Orders timeline</td></tr>
+<tr><td>Rider accepts</td><td>Track: rider first name and vehicle</td><td>Order shows the rider</td><td>Active tab opens with the stops</td><td>Orders timeline</td></tr>
+<tr><td>Rider picks up at a shop</td><td>Track: shop shows "Picked up"</td><td>Order moves to Picked up</td><td>Next stop highlighted</td><td>Orders timeline</td></tr>
+<tr><td>Rider enters correct code</td><td>Track: Delivered</td><td>Earnings credited</td><td>Earnings credited</td><td>Ledger entries created</td></tr>
+<tr><td>Withdrawal requested</td><td>None</td><td>Earnings: Processing</td><td>Earnings: Processing</td><td>Withdrawals queue</td></tr>
+<tr><td>Admin marks paid</td><td>None</td><td>SMS and Paid status</td><td>SMS and Paid status</td><td>Audit log row</td></tr>
+</table>
+<h3>3.2 Navigation rules</h3>
+<ul>
+<li>The last tab used is remembered on the device. First-time visitors land on Discover.</li>
+<li>A shop link (<code>/m/{slug}</code>) opens that shop directly. A tracking link (<code>/track/{token}</code>) opens that order directly. Both work without the tab bar.</li>
+<li>Sell and Ride show a short explanation and "Create account or sign in" when signed out.</li>
+<li>One phone number has one role. A signed-in merchant who opens Ride is told to use a different number.</li>
+<li>Tab badges show what needs attention: new orders on Sell, available jobs on Ride, an active order on Track.</li>
+<li>Each tab loads its own code on demand. Discover and Track are the lightest, since most customers only use them.</li>
+</ul>
+<h3>3.3 Role and tab access</h3>
+<table>
+<tr><th>Tab or area</th><th>Guest</th><th>Merchant</th><th>Rider</th><th>Admin</th></tr>
+<tr><td>Discover, shop pages, basket, checkout</td><td>Yes</td><td>Yes (cannot buy from own shop)</td><td>Yes</td><td>Yes</td></tr>
+<tr><td>Track</td><td>Own orders by link or device list</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+<tr><td>Sell dashboard</td><td>No</td><td>Own shop only</td><td>No</td><td>View through admin console</td></tr>
+<tr><td>Ride dashboard</td><td>No</td><td>No</td><td>Approved riders only</td><td>View through admin console</td></tr>
+<tr><td>Withdraw</td><td>No</td><td>Own balance</td><td>Own balance</td><td>Process requests</td></tr>
+<tr><td>Admin console</td><td>No</td><td>No</td><td>No</td><td>Yes, with authenticator</td></tr>
+</table>
+<h2 id="s4">4. Domain model</h2>
+<p>The big change from the MVP is the <b>basket</b>. A customer pays for a basket. A basket contains one <b>vendor order</b> per shop. One <b>delivery</b> serves the whole basket, with one <b>stop</b> per vendor order. Money moves through a double-entry <b>ledger</b>, and <b>withdrawals</b> debit it.</p><figure class="dg"><div class="sc"><svg viewBox="0 0 760 596" style="min-width:640px" role="img" aria-label="Figure 4. Core entities and their links"><defs><marker id="mk4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1L9 5L1 9" fill="none" stroke="var(--yd)" stroke-width="1.8"/></marker></defs><rect class="bx" x="20" y="10" width="170" height="109" rx="8"/><rect class="bxy" x="20" y="10" width="170" height="22" rx="8"/><text class="tx" x="105.0" y="26" text-anchor="middle">users</text><text class="ts" x="28" y="50">id</text><text class="ts" x="28" y="65">role</text><text class="ts" x="28" y="80">phone</text><text class="ts" x="28" y="95">status</text><text class="ts" x="28" y="110">token_version</text><rect class="bx" x="205" y="10" width="170" height="124" rx="8"/><rect class="bxy" x="205" y="10" width="170" height="22" rx="8"/><text class="tx" x="290.0" y="26" text-anchor="middle">merchants</text><text class="ts" x="213" y="50">id</text><text class="ts" x="213" y="65">user_id</text><text class="ts" x="213" y="80">slug</text><text class="ts" x="213" y="95">name</text><text class="ts" x="213" y="110">zone_id</text><text class="ts" x="213" y="125">status</text><rect class="bx" x="390" y="10" width="170" height="109" rx="8"/><rect class="bxy" x="390" y="10" width="170" height="22" rx="8"/><text class="tx" x="475.0" y="26" text-anchor="middle">products</text><text class="ts" x="398" y="50">id</text><text class="ts" x="398" y="65">merchant_id</text><text class="ts" x="398" y="80">name</text><text class="ts" x="398" y="95">price_kes</text><text class="ts" x="398" y="110">in_stock</text><rect class="bx" x="575" y="10" width="170" height="109" rx="8"/><rect class="bxy" x="575" y="10" width="170" height="22" rx="8"/><text class="tx" x="660.0" y="26" text-anchor="middle">zones</text><text class="ts" x="583" y="50">id</text><text class="ts" x="583" y="65">name</text><text class="ts" x="583" y="80">centre_lat</text><text class="ts" x="583" y="95">centre_lng</text><text class="ts" x="583" y="110">radius_m</text><rect class="bx" x="20" y="160" width="170" height="124" rx="8"/><rect class="bxy" x="20" y="160" width="170" height="22" rx="8"/><text class="tx" x="105.0" y="176" text-anchor="middle">baskets</text><text class="ts" x="28" y="200">id</text><text class="ts" x="28" y="215">tracking_hash</text><text class="ts" x="28" y="230">customer_phone</text><text class="ts" x="28" y="245">total_kes</text><text class="ts" x="28" y="260">status</text><text class="ts" x="28" y="275">zone_id</text><rect class="bx" x="205" y="160" width="170" height="124" rx="8"/><rect class="bxy" x="205" y="160" width="170" height="22" rx="8"/><text class="tx" x="290.0" y="176" text-anchor="middle">vendor_orders</text><text class="ts" x="213" y="200">id</text><text class="ts" x="213" y="215">basket_id</text><text class="ts" x="213" y="230">merchant_id</text><text class="ts" x="213" y="245">subtotal_kes</text><text class="ts" x="213" y="260">status</text><text class="ts" x="213" y="275">ready_at</text><rect class="bx" x="390" y="160" width="170" height="109" rx="8"/><rect class="bxy" x="390" y="160" width="170" height="22" rx="8"/><text class="tx" x="475.0" y="176" text-anchor="middle">order_items</text><text class="ts" x="398" y="200">id</text><text class="ts" x="398" y="215">vendor_order_id</text><text class="ts" x="398" y="230">product_id</text><text class="ts" x="398" y="245">qty</text><text class="ts" x="398" y="260">unit_price_kes</text><rect class="bx" x="575" y="160" width="170" height="109" rx="8"/><rect class="bxy" x="575" y="160" width="170" height="22" rx="8"/><text class="tx" x="660.0" y="176" text-anchor="middle">payments</text><text class="ts" x="583" y="200">id</text><text class="ts" x="583" y="215">basket_id</text><text class="ts" x="583" y="230">amount_kes</text><text class="ts" x="583" y="245">status</text><text class="ts" x="583" y="260">mpesa_receipt</text><rect class="bx" x="20" y="310" width="170" height="124" rx="8"/><rect class="bxy" x="20" y="310" width="170" height="22" rx="8"/><text class="tx" x="105.0" y="326" text-anchor="middle">deliveries</text><text class="ts" x="28" y="350">id</text><text class="ts" x="28" y="365">basket_id</text><text class="ts" x="28" y="380">rider_id</text><text class="ts" x="28" y="395">fee_kes</text><text class="ts" x="28" y="410">status</text><text class="ts" x="28" y="425">code_hmac</text><rect class="bx" x="205" y="310" width="170" height="109" rx="8"/><rect class="bxy" x="205" y="310" width="170" height="22" rx="8"/><text class="tx" x="290.0" y="326" text-anchor="middle">delivery_stops</text><text class="ts" x="213" y="350">id</text><text class="ts" x="213" y="365">delivery_id</text><text class="ts" x="213" y="380">vendor_order_id</text><text class="ts" x="213" y="395">seq</text><text class="ts" x="213" y="410">status</text><rect class="bx" x="390" y="310" width="170" height="109" rx="8"/><rect class="bxy" x="390" y="310" width="170" height="22" rx="8"/><text class="tx" x="475.0" y="326" text-anchor="middle">riders</text><text class="ts" x="398" y="350">user_id</text><text class="ts" x="398" y="365">vehicle</text><text class="ts" x="398" y="380">status</text><text class="ts" x="398" y="395">available</text><text class="ts" x="398" y="410">last_seen_at</text><rect class="bx" x="575" y="310" width="170" height="109" rx="8"/><rect class="bxy" x="575" y="310" width="170" height="22" rx="8"/><text class="tx" x="660.0" y="326" text-anchor="middle">notifications</text><text class="ts" x="583" y="350">id</text><text class="ts" x="583" y="365">user_id</text><text class="ts" x="583" y="380">channel</text><text class="ts" x="583" y="395">type</text><text class="ts" x="583" y="410">status</text><rect class="bx" x="20" y="450" width="170" height="94" rx="8"/><rect class="bxy" x="20" y="450" width="170" height="22" rx="8"/><text class="tx" x="105.0" y="466" text-anchor="middle">ledger_accounts</text><text class="ts" x="28" y="490">id</text><text class="ts" x="28" y="505">owner_type</text><text class="ts" x="28" y="520">owner_id</text><text class="ts" x="28" y="535">kind</text><rect class="bx" x="205" y="450" width="170" height="109" rx="8"/><rect class="bxy" x="205" y="450" width="170" height="22" rx="8"/><text class="tx" x="290.0" y="466" text-anchor="middle">ledger_entries</text><text class="ts" x="213" y="490">id</text><text class="ts" x="213" y="505">txn_id</text><text class="ts" x="213" y="520">account_id</text><text class="ts" x="213" y="535">amount_kes</text><text class="ts" x="213" y="550">ref</text><rect class="bx" x="390" y="450" width="170" height="109" rx="8"/><rect class="bxy" x="390" y="450" width="170" height="22" rx="8"/><text class="tx" x="475.0" y="466" text-anchor="middle">withdrawals</text><text class="ts" x="398" y="490">id</text><text class="ts" x="398" y="505">account_id</text><text class="ts" x="398" y="520">amount_kes</text><text class="ts" x="398" y="535">status</text><text class="ts" x="398" y="550">mpesa_ref</text><rect class="bx" x="575" y="450" width="170" height="109" rx="8"/><rect class="bxy" x="575" y="450" width="170" height="22" rx="8"/><text class="tx" x="660.0" y="466" text-anchor="middle">audit_log</text><text class="ts" x="583" y="490">id</text><text class="ts" x="583" y="505">admin_id</text><text class="ts" x="583" y="520">action</text><text class="ts" x="583" y="535">target</text><text class="ts" x="583" y="550">created_at</text><path class="ar" d="M190 40L205 40" marker-end="url(#mk4)"/><path class="ar" d="M375 40L390 40" marker-end="url(#mk4)"/><path class="ar" d="M190 215L205 215" marker-end="url(#mk4)"/><path class="ar" d="M375 215L390 215" marker-end="url(#mk4)"/><path class="ar" d="M105 284L105 310" marker-end="url(#mk4)"/><path class="ar" d="M290 284L290 310" marker-end="url(#mk4)"/><path class="ar" d="M190 350L205 350" marker-end="url(#mk4)"/><path class="ar" d="M390 350L375 350" marker-end="url(#mk4)"/><path class="ar" d="M190 480L205 480" marker-end="url(#mk4)"/><path class="ar" d="M390 480L375 480" marker-end="url(#mk4)"/><text class="ts" x="380" y="580" text-anchor="middle">Arrows show the main foreign-key links. payments, notifications and audit_log also reference baskets, users and admins by ID.</text></svg></div><figcaption>Figure 4. Core entities and their links</figcaption></figure>
+<h3>4.1 Production schema (core tables)</h3>
+<p>Authentication tables (users, otp_challenges, refresh_tokens, auth_events, admin_backup_codes, push_subscriptions) are defined in Section 10. All IDs are UUIDs and all times are UTC. Money is stored as whole Kenyan shillings in integer columns.</p>
+<pre><code>CREATE TABLE zones (                       -- a market or neighbourhood where baskets are allowed
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(80) NOT NULL, centre_lat NUMERIC(9,6) NOT NULL, centre_lng NUMERIC(9,6) NOT NULL,
+  radius_m INTEGER NOT NULL, active BOOLEAN NOT NULL DEFAULT true);
+
+CREATE TABLE merchants (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL UNIQUE REFERENCES users(id),
+  slug VARCHAR(60) NOT NULL UNIQUE, business_name VARCHAR(120) NOT NULL,
+  category VARCHAR(24) NOT NULL, zone_id UUID REFERENCES zones(id),
+  location_text VARCHAR(200), lat NUMERIC(9,6), lng NUMERIC(9,6),
+  intro_video_key TEXT, payout_phone VARCHAR(16) NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'ONBOARDING'
+    CHECK (status IN ('ONBOARDING','PENDING_REVIEW','ACTIVE','SUSPENDED')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now());
+
+CREATE TABLE products (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  merchant_id UUID NOT NULL REFERENCES merchants(id),
+  name VARCHAR(120) NOT NULL, unit VARCHAR(20), price_kes INTEGER NOT NULL CHECK (price_kes &gt;= 0),
+  in_stock BOOLEAN NOT NULL DEFAULT true, photo_key TEXT,
+  source VARCHAR(8) NOT NULL DEFAULT 'VOICE', deleted_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now());
+CREATE INDEX ix_products_merchant ON products (merchant_id) WHERE deleted_at IS NULL;
+
+CREATE TABLE riders (
+  user_id UUID PRIMARY KEY REFERENCES users(id),
+  vehicle VARCHAR(16) NOT NULL, plate VARCHAR(16), selfie_key TEXT, id_photo_key TEXT,
+  referee_name VARCHAR(80), referee_phone VARCHAR(16), area VARCHAR(80), payout_phone VARCHAR(16) NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'ONBOARDING'
+    CHECK (status IN ('ONBOARDING','PENDING_APPROVAL','ACTIVE','SUSPENDED')),
+  available BOOLEAN NOT NULL DEFAULT false, last_lat NUMERIC(9,6), last_lng NUMERIC(9,6), last_seen_at TIMESTAMPTZ);
+
+CREATE TABLE baskets (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  public_no VARCHAR(12) NOT NULL UNIQUE,           -- e.g. BZ-1042
+  tracking_hash BYTEA NOT NULL UNIQUE,
+  zone_id UUID NOT NULL REFERENCES zones(id),
+  customer_name VARCHAR(80) NOT NULL, customer_phone VARCHAR(16) NOT NULL,
+  dest_lat NUMERIC(9,6), dest_lng NUMERIC(9,6), landmark VARCHAR(200) NOT NULL,
+  items_total_kes INTEGER NOT NULL, delivery_fee_kes INTEGER NOT NULL, total_kes INTEGER NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'PENDING_PAYMENT'
+    CHECK (status IN ('PENDING_PAYMENT','PAID','IN_PROGRESS','COMPLETED','CANCELLED','EXPIRED')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(), paid_at TIMESTAMPTZ, completed_at TIMESTAMPTZ);
+
+CREATE TABLE vendor_orders (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  basket_id UUID NOT NULL REFERENCES baskets(id), merchant_id UUID NOT NULL REFERENCES merchants(id),
+  subtotal_kes INTEGER NOT NULL, commission_kes INTEGER NOT NULL DEFAULT 0,
+  status VARCHAR(20) NOT NULL DEFAULT 'AWAITING_PAYMENT'
+    CHECK (status IN ('AWAITING_PAYMENT','PAID','READY','PICKED_UP','DELIVERED','REJECTED','CANCELLED')),
+  ready_by TIMESTAMPTZ, ready_at TIMESTAMPTZ, picked_up_at TIMESTAMPTZ, reject_reason VARCHAR(120),
+  UNIQUE (basket_id, merchant_id));
+
+CREATE TABLE order_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  vendor_order_id UUID NOT NULL REFERENCES vendor_orders(id), product_id UUID NOT NULL REFERENCES products(id),
+  name_snapshot VARCHAR(120) NOT NULL, unit_price_kes INTEGER NOT NULL, qty INTEGER NOT NULL CHECK (qty &gt; 0),
+  line_total_kes INTEGER NOT NULL, status VARCHAR(12) NOT NULL DEFAULT 'OK' CHECK (status IN ('OK','UNAVAILABLE')));
+
+CREATE TABLE payments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  basket_id UUID NOT NULL REFERENCES baskets(id), provider VARCHAR(12) NOT NULL DEFAULT 'MPESA',
+  amount_kes INTEGER NOT NULL, phone VARCHAR(16) NOT NULL,
+  merchant_request_id VARCHAR(64), checkout_request_id VARCHAR(64) UNIQUE, mpesa_receipt VARCHAR(20) UNIQUE,
+  status VARCHAR(12) NOT NULL DEFAULT 'INITIATED' CHECK (status IN ('INITIATED','PENDING','SUCCEEDED','FAILED','TIMEOUT')),
+  result_code INTEGER, result_desc VARCHAR(200), created_at TIMESTAMPTZ NOT NULL DEFAULT now(), completed_at TIMESTAMPTZ);
+
+CREATE TABLE payment_callbacks (
+  id BIGSERIAL PRIMARY KEY, checkout_request_id VARCHAR(64), raw_body JSONB NOT NULL,
+  received_at TIMESTAMPTZ NOT NULL DEFAULT now(), processed_at TIMESTAMPTZ);
+
+CREATE TABLE deliveries (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  basket_id UUID NOT NULL UNIQUE REFERENCES baskets(id), rider_id UUID REFERENCES riders(user_id),
+  fee_kes INTEGER NOT NULL,
+  status VARCHAR(16) NOT NULL DEFAULT 'UNASSIGNED'
+    CHECK (status IN ('UNASSIGNED','ASSIGNED','COLLECTING','ON_THE_WAY','DELIVERED','FAILED')),
+  code_hmac BYTEA NOT NULL, code_attempts SMALLINT NOT NULL DEFAULT 0,
+  offered_at TIMESTAMPTZ, assigned_at TIMESTAMPTZ, delivered_at TIMESTAMPTZ);
+
+CREATE TABLE delivery_stops (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  delivery_id UUID NOT NULL REFERENCES deliveries(id), vendor_order_id UUID NOT NULL REFERENCES vendor_orders(id),
+  seq SMALLINT NOT NULL, status VARCHAR(12) NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING','PICKED_UP','SKIPPED')),
+  picked_up_at TIMESTAMPTZ, UNIQUE (delivery_id, seq));
+
+-- Double-entry ledger
+CREATE TABLE ledger_accounts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  owner_type VARCHAR(12) NOT NULL CHECK (owner_type IN ('MERCHANT','RIDER','BEEZ','CUSTOMER_FUNDS','PAYOUT_CLEARING')),
+  owner_id UUID, kind VARCHAR(16) NOT NULL CHECK (kind IN ('AVAILABLE','HELD','PAYABLE','REVENUE','CASH')),
+  UNIQUE (owner_type, owner_id, kind));
+CREATE TABLE ledger_txns (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(), type VARCHAR(24) NOT NULL,
+  ref_type VARCHAR(16), ref_id UUID, memo VARCHAR(200), created_at TIMESTAMPTZ NOT NULL DEFAULT now());
+CREATE TABLE ledger_entries (
+  id BIGSERIAL PRIMARY KEY, txn_id UUID NOT NULL REFERENCES ledger_txns(id),
+  account_id UUID NOT NULL REFERENCES ledger_accounts(id), amount_kes INTEGER NOT NULL,  -- credit +, debit -
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now());
+-- Rule enforced in code and by a deferred constraint trigger: SUM(amount_kes) per txn = 0.
+
+CREATE TABLE withdrawals (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(), public_no VARCHAR(12) NOT NULL UNIQUE,
+  user_id UUID NOT NULL REFERENCES users(id), account_id UUID NOT NULL REFERENCES ledger_accounts(id),
+  amount_kes INTEGER NOT NULL CHECK (amount_kes &gt;= 100), payout_phone VARCHAR(16) NOT NULL,
+  status VARCHAR(12) NOT NULL DEFAULT 'REQUESTED'
+    CHECK (status IN ('REQUESTED','PROCESSING','PAID','REJECTED','FAILED')),
+  hold_txn_id UUID REFERENCES ledger_txns(id), paid_txn_id UUID REFERENCES ledger_txns(id),
+  mpesa_ref VARCHAR(20), reason VARCHAR(200), processed_by UUID REFERENCES users(id),
+  requested_at TIMESTAMPTZ NOT NULL DEFAULT now(), processed_at TIMESTAMPTZ);
+-- Only one open request per user:
+CREATE UNIQUE INDEX ux_withdrawal_open ON withdrawals (user_id) WHERE status IN ('REQUESTED','PROCESSING');
+
+CREATE TABLE refunds (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(), basket_id UUID NOT NULL REFERENCES baskets(id),
+  vendor_order_id UUID REFERENCES vendor_orders(id), amount_kes INTEGER NOT NULL,
+  reason VARCHAR(120) NOT NULL, status VARCHAR(10) NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING','DONE')),
+  mpesa_ref VARCHAR(20), created_at TIMESTAMPTZ NOT NULL DEFAULT now(), done_at TIMESTAMPTZ);
+
+CREATE TABLE notifications (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(), user_id UUID, phone VARCHAR(16),
+  channel VARCHAR(10) NOT NULL, type VARCHAR(32) NOT NULL, payload JSONB NOT NULL,
+  status VARCHAR(10) NOT NULL DEFAULT 'PENDING', attempts SMALLINT NOT NULL DEFAULT 0,
+  sent_at TIMESTAMPTZ, acked_at TIMESTAMPTZ, created_at TIMESTAMPTZ NOT NULL DEFAULT now());
+
+CREATE TABLE audit_log (
+  id BIGSERIAL PRIMARY KEY, admin_id UUID NOT NULL REFERENCES users(id), action VARCHAR(40) NOT NULL,
+  target_type VARCHAR(20), target_id UUID, before JSONB, after JSONB, ip INET, created_at TIMESTAMPTZ NOT NULL DEFAULT now());</code></pre>
+<h3>4.2 Why a double-entry ledger?</h3>
+<p>Every movement of money is written as a set of entries that add up to zero. A customer payment moves money from "customer funds" to each shop, the rider and Beez. A withdrawal moves money from a user's available account to a hold and then to payout clearing. Because entries are never edited, the system can always answer "where did this shilling go?", and a user's balance is simply the sum of their account.</p>
+<h2 id="s5">5. State machines</h2>
+<p>Four things move through states. The server enforces every transition, so a client can never skip a step.</p><figure class="dg"><div class="sc"><svg viewBox="0 0 760 390" style="min-width:640px" role="img" aria-label="Figure 5. The four state machines, with their exit states"><defs><marker id="mk5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1L9 5L1 9" fill="none" stroke="var(--yd)" stroke-width="1.8"/></marker></defs><text class="hd" x="10" y="26" text-anchor="start">Basket</text><rect class="bx" x="9" y="34" width="142" height="36" rx="10"/><text class="tx2" x="80.0" y="57.0" text-anchor="middle">PENDING_PAYMENT</text><path class="ar" d="M151 52L159 52" marker-end="url(#mk5)"/><rect class="bx" x="159" y="34" width="142" height="36" rx="10"/><text class="tx2" x="230.0" y="57.0" text-anchor="middle">PAID</text><path class="ar" d="M301 52L309 52" marker-end="url(#mk5)"/><rect class="bx" x="309" y="34" width="142" height="36" rx="10"/><text class="tx2" x="380.0" y="57.0" text-anchor="middle">IN_PROGRESS</text><path class="ar" d="M451 52L459 52" marker-end="url(#mk5)"/><rect class="bxy" x="459" y="34" width="142" height="36" rx="10"/><text class="tx2" x="530.0" y="57.0" text-anchor="middle">COMPLETED</text><text class="hd" x="10" y="118" text-anchor="start">Vendor order</text><rect class="bx" x="9" y="126" width="142" height="36" rx="10"/><text class="tx2" x="80.0" y="149.0" text-anchor="middle">AWAITING_PAYMENT</text><path class="ar" d="M151 144L159 144" marker-end="url(#mk5)"/><rect class="bx" x="159" y="126" width="142" height="36" rx="10"/><text class="tx2" x="230.0" y="149.0" text-anchor="middle">PAID</text><path class="ar" d="M301 144L309 144" marker-end="url(#mk5)"/><rect class="bx" x="309" y="126" width="142" height="36" rx="10"/><text class="tx2" x="380.0" y="149.0" text-anchor="middle">READY</text><path class="ar" d="M451 144L459 144" marker-end="url(#mk5)"/><rect class="bx" x="459" y="126" width="142" height="36" rx="10"/><text class="tx2" x="530.0" y="149.0" text-anchor="middle">PICKED_UP</text><path class="ar" d="M601 144L609 144" marker-end="url(#mk5)"/><rect class="bxy" x="609" y="126" width="142" height="36" rx="10"/><text class="tx2" x="680.0" y="149.0" text-anchor="middle">DELIVERED</text><text class="hd" x="10" y="210" text-anchor="start">Delivery</text><rect class="bx" x="9" y="218" width="142" height="36" rx="10"/><text class="tx2" x="80.0" y="241.0" text-anchor="middle">UNASSIGNED</text><path class="ar" d="M151 236L159 236" marker-end="url(#mk5)"/><rect class="bx" x="159" y="218" width="142" height="36" rx="10"/><text class="tx2" x="230.0" y="241.0" text-anchor="middle">ASSIGNED</text><path class="ar" d="M301 236L309 236" marker-end="url(#mk5)"/><rect class="bx" x="309" y="218" width="142" height="36" rx="10"/><text class="tx2" x="380.0" y="241.0" text-anchor="middle">COLLECTING</text><path class="ar" d="M451 236L459 236" marker-end="url(#mk5)"/><rect class="bx" x="459" y="218" width="142" height="36" rx="10"/><text class="tx2" x="530.0" y="241.0" text-anchor="middle">ON_THE_WAY</text><path class="ar" d="M601 236L609 236" marker-end="url(#mk5)"/><rect class="bxy" x="609" y="218" width="142" height="36" rx="10"/><text class="tx2" x="680.0" y="241.0" text-anchor="middle">DELIVERED</text><text class="hd" x="10" y="302" text-anchor="start">Withdrawal</text><rect class="bx" x="9" y="310" width="142" height="36" rx="10"/><text class="tx2" x="80.0" y="333.0" text-anchor="middle">REQUESTED</text><path class="ar" d="M151 328L159 328" marker-end="url(#mk5)"/><rect class="bx" x="159" y="310" width="142" height="36" rx="10"/><text class="tx2" x="230.0" y="333.0" text-anchor="middle">PROCESSING</text><path class="ar" d="M301 328L309 328" marker-end="url(#mk5)"/><rect class="bxy" x="309" y="310" width="142" height="36" rx="10"/><text class="tx2" x="380.0" y="333.0" text-anchor="middle">PAID</text><text class="ts" x="10" y="86" text-anchor="start">Exits: CANCELLED or EXPIRED before payment, CANCELLED after a full refund</text><text class="ts" x="10" y="178" text-anchor="start">Exits: REJECTED or CANCELLED (shop cannot fill it), triggers a partial refund</text><text class="ts" x="10" y="270" text-anchor="start">Exit: FAILED (customer not found), handled by an admin</text><text class="ts" x="10" y="362" text-anchor="start">Exits: REJECTED or FAILED, the held amount returns to the balance</text></svg></div><figcaption>Figure 5. The four state machines, with their exit states</figcaption></figure>
+<table>
+<tr><th>Entity</th><th>From</th><th>To</th><th>Triggered by</th><th>Guard</th></tr>
+<tr><td>Basket</td><td>PENDING_PAYMENT</td><td>PAID</td><td>Verified M-Pesa success</td><td>Amount matches basket total</td></tr>
+<tr><td>Basket</td><td>PAID</td><td>IN_PROGRESS</td><td>First stop picked up</td><td>Delivery assigned</td></tr>
+<tr><td>Basket</td><td>IN_PROGRESS</td><td>COMPLETED</td><td>Correct delivery code</td><td>All non-cancelled vendor orders picked up</td></tr>
+<tr><td>Vendor order</td><td>PAID</td><td>READY</td><td>Merchant taps Ready</td><td>Caller owns the vendor order</td></tr>
+<tr><td>Vendor order</td><td>PAID</td><td>REJECTED</td><td>Merchant taps Cannot fill</td><td>Within the ready window</td></tr>
+<tr><td>Vendor order</td><td>READY</td><td>PICKED_UP</td><td>Rider confirms pickup</td><td>Rider assigned to this delivery</td></tr>
+<tr><td>Delivery</td><td>UNASSIGNED</td><td>ASSIGNED</td><td>Rider accepts</td><td>Atomic update, first rider wins</td></tr>
+<tr><td>Delivery</td><td>COLLECTING</td><td>ON_THE_WAY</td><td>Last stop confirmed</td><td>Every active stop picked up or skipped</td></tr>
+<tr><td>Delivery</td><td>ON_THE_WAY</td><td>DELIVERED</td><td>Correct 4-digit code</td><td>Fewer than 5 wrong tries</td></tr>
+<tr><td>Withdrawal</td><td>REQUESTED</td><td>PROCESSING</td><td>Admin opens it, or automatic payout starts</td><td>Hold exists in the ledger</td></tr>
+<tr><td>Withdrawal</td><td>PROCESSING</td><td>PAID</td><td>Admin enters M-Pesa reference</td><td>Recent authenticator check</td></tr>
+</table>
+<div class="note"><b>Invariant.</b> The basket total always equals the sum of its vendor-order subtotals plus the delivery fee. Any change (a rejected shop, a removed item) writes a refund and a ledger reversal in the same database transaction as the status change.</div>
+<h2 id="s6">6. The multi-vendor basket</h2>
+<p>Edma's example: someone does the week's grocery shopping from rice, vegetables, meat and fruit sellers, manages it all from the phone, and one delivery person brings it home. This section defines how that works.</p>
+<h3>6.1 Rules</h3>
+<table>
+<tr><th>Topic</th><th>Rule</th></tr>
+<tr><td>Where baskets are allowed</td><td>Only across shops in the same <b>zone</b> (a market or neighbourhood). Shops across town are separate baskets. This keeps one rider's route short and delivery times sensible</td></tr>
+<tr><td>Pricing</td><td>The server prices every line from the database at checkout. Item totals, per-shop subtotals, delivery fee and basket total are computed once and stored</td></tr>
+<tr><td>Delivery fee</td><td><code>fee = base + per_extra_stop x (stops - 1) + per_km x ceil(max(0, km - free_km))</code>. Placeholder values: base KES 100, extra stop KES 40, free distance 3 km, KES 20 per km beyond. Stored in configuration and shown to the customer before payment</td></tr>
+<tr><td>One payment</td><td>One STK Push for the basket total. The ledger splits it afterwards</td></tr>
+<tr><td>One rider, one code</td><td>One delivery with one stop per shop and one 4-digit delivery code for the customer</td></tr>
+<tr><td>Offering the job</td><td>The job is offered to riders once every active vendor order is READY. If a shop is late (past its ready window), the customer and admin are alerted</td></tr>
+<tr><td>Stop order</td><td>The server proposes the shortest route (nearest shop first, then the customer). The rider can follow it or change it. The customer is always last</td></tr>
+<tr><td>Ready window</td><td>Each shop has a deadline (for example 15 minutes) after payment, stored as <code>ready_by</code></td></tr>
+<tr><td>Basket limits</td><td>For example at most 6 shops and 40 items, and a weight guide by vehicle (a bicycle gets a smaller limit than a boda). Configurable</td></tr>
+<tr><td>Own shop</td><td>A merchant cannot order from their own shop</td></tr>
+</table>
+<h3>6.2 When something goes wrong</h3>
+<table>
+<tr><th>Situation</th><th>What happens</th></tr>
+<tr><td>A shop cannot fill its part</td><td>That vendor order becomes REJECTED. The customer is told and chooses within 5 minutes: wait for a replacement they pick, or take a partial refund. No choice means refund. The other shops continue</td></tr>
+<tr><td>One item is out of stock</td><td>The item is marked UNAVAILABLE, the subtotal is reduced, and the difference is refunded</td></tr>
+<tr><td>A shop is very late</td><td>After the ready window plus a grace period, the customer can drop that part with a refund, and the rider is released to continue</td></tr>
+<tr><td>Rider cannot find the customer</td><td>The rider taps Customer not found. The delivery becomes FAILED and an admin decides: retry, return, or refund</td></tr>
+<tr><td>Payment fails or times out</td><td>The basket stays PENDING_PAYMENT, then becomes EXPIRED after 15 minutes. No shop is ever alerted</td></tr>
+<tr><td>Basket cancelled before pickup</td><td>Full refund, ledger reversed, shops told</td></tr>
+</table>
+<h3>6.3 Worked example</h3>
+<p>A customer buys from four shops. The 5% merchandise commission below is illustrative; the delivery fee uses the approved sandbox formula and its 95/5 rider/platform split:</p>
+<table>
+<tr><th>Part</th><th>Goods</th><th>Commission</th><th>Shop receives</th></tr>
+<tr><td>Mama Neema (rice, oil)</td><td>KES 650</td><td>33</td><td>KES 617</td></tr>
+<tr><td>Mwanaisha Greens (tomatoes)</td><td>KES 200</td><td>10</td><td>KES 190</td></tr>
+<tr><td>Baraka Butchery (beef)</td><td>KES 700</td><td>35</td><td>KES 665</td></tr>
+<tr><td>Fatuma Fruits (oranges)</td><td>KES 150</td><td>8</td><td>KES 142</td></tr>
+<tr><td><b>Goods total</b></td><td><b>KES 1,700</b></td><td><b>86</b></td><td><b>KES 1,614</b></td></tr>
+<tr><td>Delivery, 4 stops: 100 + 3 x 40</td><td colspan="3">KES 220: KES 209 to the rider and KES 11 to Beez</td></tr>
+<tr><td><b>Customer pays</b></td><td colspan="3"><b>KES 1,920</b> = 1,614 to shops + 209 to rider + 97 to Beez (86 merchandise commission + 11 delivery-fee share)</td></tr>
+</table>
+<p>On verified delivery, balanced ledger transactions atomically allocate the merchandise and delivery fee. The rider receives 95% of the delivery fee; Beez receives 5%, rounded to the nearest KES. Until then, the money sits in "customer funds" and nobody can withdraw it.</p>
+<h3>6.4 What the basket changes in each tab</h3>
+<table>
+<tr><th>Tab</th><th>Change from a single-shop order</th></tr>
+<tr><td>Discover</td><td>Items from several shops can be added. A floating bar shows shops, items and total. Shops outside the zone are greyed out with an explanation</td></tr>
+<tr><td>Track</td><td>Timeline shows each shop (Preparing, Ready, Picked up), then the rider's progress</td></tr>
+<tr><td>Sell</td><td>The merchant sees only their own part, with the rider's name when assigned. Their earnings are credited only when the basket is delivered</td></tr>
+<tr><td>Ride</td><td>The job card shows N pickups and the drop-off. The Active tab lists stops in order, each with a confirm button</td></tr>
+<tr><td>Admin</td><td>Order detail shows every vendor order and stop. Manual actions work per part</td></tr>
+</table>
+<h2 id="s7">7. Checkout and payment</h2>
+<p>The customer builds a basket across shops, then pays once. Nothing reaches a shop or a rider until M-Pesa confirms the money.</p><figure class="dg"><div class="sc"><svg viewBox="0 0 760 638" style="min-width:640px" role="img" aria-label="Figure 6. One multi-shop purchase from checkout to delivery"><defs><marker id="mk6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1L9 5L1 9" fill="none" stroke="var(--yd)" stroke-width="1.8"/></marker></defs><rect class="bxy" x="16.0" y="6" width="136.0" height="34" rx="10"/><text class="tx" x="84.0" y="28.0" text-anchor="middle">Customer</text><line class="ll" x1="84.0" y1="42" x2="84.0" y2="632"/><rect class="bxy" x="164.0" y="6" width="136.0" height="34" rx="10"/><text class="tx" x="232.0" y="28.0" text-anchor="middle">Beez API</text><line class="ll" x1="232.0" y1="42" x2="232.0" y2="632"/><rect class="bxy" x="312.0" y="6" width="136.0" height="34" rx="10"/><text class="tx" x="380.0" y="28.0" text-anchor="middle">M-Pesa</text><line class="ll" x1="380.0" y1="42" x2="380.0" y2="632"/><rect class="bxy" x="460.0" y="6" width="136.0" height="34" rx="10"/><text class="tx" x="528.0" y="28.0" text-anchor="middle">Shops</text><line class="ll" x1="528.0" y1="42" x2="528.0" y2="632"/><rect class="bxy" x="608.0" y="6" width="136.0" height="34" rx="10"/><text class="tx" x="676.0" y="28.0" text-anchor="middle">Rider</text><line class="ll" x1="676.0" y1="42" x2="676.0" y2="632"/><path class="ar" d="M84.0 84L226.0 84" marker-end="url(#mk6)"/><text class="lb" x="158.0" y="78" text-anchor="middle">1 POST /public/baskets</text><rect class="nt" x="120.8" y="99" width="222.39999999999998" height="26" rx="8"/><text class="ts" x="232.0" y="116" text-anchor="middle">Server prices items, fee, total</text><path class="ar" d="M84.0 148L226.0 148" marker-end="url(#mk6)"/><text class="lb" x="158.0" y="142" text-anchor="middle">2 POST /baskets/{token}/pay</text><path class="ar" d="M232.0 180L374.0 180" marker-end="url(#mk6)"/><text class="lb" x="306.0" y="174" text-anchor="middle">3 STK Push (basket total)</text><path class="ar dsh" d="M380.0 212L90.0 212" marker-end="url(#mk6)"/><text class="lb" x="232.0" y="206" text-anchor="middle">4 PIN prompt on phone</text><path class="ar dsh" d="M380.0 244L238.0 244" marker-end="url(#mk6)"/><text class="lb" x="306.0" y="238" text-anchor="middle">5 callback: success</text><rect class="nt" x="85.6" y="259" width="292.79999999999995" height="26" rx="8"/><text class="ts" x="232.0" y="276" text-anchor="middle">Verify, mark PAID, create delivery, ledger</text><path class="ar" d="M232.0 308L522.0 308" marker-end="url(#mk6)"/><text class="lb" x="380.0" y="302" text-anchor="middle">6 push + SMS to each shop</text><path class="ar" d="M528.0 340L238.0 340" marker-end="url(#mk6)"/><text class="lb" x="380.0" y="334" text-anchor="middle">7 mark part READY</text><path class="ar" d="M232.0 372L670.0 372" marker-end="url(#mk6)"/><text class="lb" x="454.0" y="366" text-anchor="middle">8 job offer, N stops</text><path class="ar" d="M676.0 404L238.0 404" marker-end="url(#mk6)"/><text class="lb" x="454.0" y="398" text-anchor="middle">9 accept (first wins)</text><path class="ar dsh" d="M676.0 436L534.0 436" marker-end="url(#mk6)"/><text class="lb" x="602.0" y="430" text-anchor="middle">10 collect at each shop</text><path class="ar" d="M676.0 468L238.0 468" marker-end="url(#mk6)"/><text class="lb" x="454.0" y="462" text-anchor="middle">11 confirm each pickup</text><path class="ar dsh" d="M676.0 500L90.0 500" marker-end="url(#mk6)"/><text class="lb" x="380.0" y="494" text-anchor="middle">12 arrives, asks for code</text><path class="ar" d="M676.0 532L238.0 532" marker-end="url(#mk6)"/><text class="lb" x="454.0" y="526" text-anchor="middle">13 enter 4-digit code</text><path class="ar dsh" d="M232.0 564L90.0 564" marker-end="url(#mk6)"/><text class="lb" x="158.0" y="558" text-anchor="middle">14 delivered, receipt</text><rect class="nt" x="104.8" y="579" width="254.39999999999998" height="26" rx="8"/><text class="ts" x="232.0" y="596" text-anchor="middle">Ledger credits shops, rider and Beez</text></svg></div><figcaption>Figure 6. One multi-shop purchase from checkout to delivery</figcaption></figure>
+<h3>7.1 API contract</h3>
+<pre><code>POST /api/v1/public/baskets                       (guest, rate limited)
+{ "zoneId": "...", "lines": [ { "productId": "...", "qty": 2 }, { "productId": "...", "qty": 1 } ],
+  "customer": { "name": "Amina", "phone": "0712345678" },
+  "delivery": { "lat": -4.04, "lng": 39.66, "landmark": "Opposite the petrol station, Nyali" } }
+
+201 Created
+{ "basketNo": "BZ-1042", "trackingToken": "k3J...", "itemsTotalKes": 1700, "deliveryFeeKes": 220, "totalKes": 1920,
+  "vendors": [ { "merchantId": "...", "name": "Mama Neema", "subtotalKes": 650 }, ... ] }
+
+POST /api/v1/public/baskets/{trackingToken}/pay   -&gt; 202 { "paymentId": "...", "status": "PENDING" }
+GET  /api/v1/public/baskets/{trackingToken}       -&gt; status, vendors[], delivery{rider, stops[]}, code (only after paid)</code></pre>
+<p>Errors: <code>zone_mismatch</code> (a shop is outside the zone), <code>out_of_stock</code>, <code>shop_closed</code>, <code>limit_exceeded</code>, <code>rate_limited</code>, <code>invalid_phone</code>. Prices sent by the client are ignored.</p>
+<h3>7.2 M-Pesa STK Push</h3>
+<ol>
+<li>Create the payment row with status INITIATED. Get an OAuth token from Daraja (cached until it expires).</li>
+<li>Send the STK Push request with the shortcode, a timestamp-based password, the amount (whole shillings), the customer phone in international format, the callback URL (with a secret path segment), and the basket number as the reference. Save <code>MerchantRequestID</code> and <code>CheckoutRequestID</code>, then set PENDING.</li>
+<li>The customer approves on their phone. M-Pesa posts the result to the callback.</li>
+<li>The callback handler stores the raw body, returns 200 at once, and processes it once (Section 7.3).</li>
+<li>A background job queries any payment still PENDING after 2 minutes and settles it as SUCCEEDED, FAILED or TIMEOUT.</li>
+</ol>
+<div class="note">Confirm the exact request fields, callback format, callback source addresses and any new Safaricom requirements in the current Daraja documentation before building. They change over time.</div>
+<h3>7.3 Processing a success callback (one database transaction)</h3>
+<pre><code>1. Find payment by CheckoutRequestID. If SUCCEEDED already: return (idempotent).
+2. Verify with the transaction status query (do not trust the callback body alone).
+3. Check amount == basket.total_kes and phone matches. If not: flag for admin, do not mark paid.
+4. payment: SUCCEEDED, store mpesa_receipt.
+5. basket: PAID. vendor_orders: PAID, set ready_by = now + ready window.
+6. delivery: create UNASSIGNED with fee and HMAC of the generated 4-digit code.
+7. ledger txn CUSTOMER_PAYMENT: CASH -total, CUSTOMER_FUNDS +total.
+8. outbox: notifications for each shop, SMS receipt to customer.
+Commit. Notifications are sent after commit by the outbox worker.</code></pre>
+<h3>7.4 Safeguards</h3>
+<ul>
+<li><b>Idempotency.</b> A unique constraint on <code>checkout_request_id</code> and <code>mpesa_receipt</code>. A client-supplied <code>Idempotency-Key</code> header prevents double baskets on a retry.</li>
+<li><b>Spam control.</b> Maximum 3 unpaid baskets per phone per hour, one STK Push per basket per 60 seconds, per-IP limits.</li>
+<li><b>Reconciliation.</b> A daily job compares Beez payments with the M-Pesa statement. Differences go to the admin Payments tab.</li>
+<li><b>Orphan payments.</b> Money received with no matching basket is flagged for manual handling and refund.</li>
+<li><b>Refunds.</b> Each refund is a row and a ledger reversal. In the first phase an admin sends the money back by hand and records the reference. Later this can use the M-Pesa reversal or payout APIs, subject to Safaricom approval.</li>
+</ul>
+<h3>7.5 Customer without an account</h3>
+<p>The tracking token (128 bits or more, stored hashed) is the customer's key to this basket. The device also remembers recent tokens so the Track tab lists recent orders. See Section 10.4.</p>
+<h2 id="s8">8. Delivery and dispatch</h2>
+<h3>8.1 Rider availability and location</h3>
+<ul>
+<li>A rider switches AVAILABLE or OFFLINE in the Jobs tab. When available, the app sends the rider's location about every 15 seconds while it is open (<code>POST /riders/me/location</code>).</li>
+<li>A rider counts as near only if their last location is under 2 minutes old.</li>
+</ul>
+<h3>8.2 Offering a job</h3>
+<ol>
+<li>When every active vendor order of a basket is READY, the delivery becomes offerable.</li>
+<li>The server selects approved, available riders within a radius of the zone centre (start at 3 km, widen to 6 km after 2 minutes) ordered by distance.</li>
+<li>They receive a push alert and the job appears in Jobs with number of stops, distance and fee.</li>
+<li>The first accept wins, using one atomic update:</li>
+</ol>
+<pre><code>UPDATE deliveries SET rider_id = :rider, status = 'ASSIGNED', assigned_at = now()
+ WHERE id = :id AND rider_id IS NULL AND status = 'UNASSIGNED';   -- 0 rows updated = "job was taken"</code></pre>
+<ol start="5">
+<li>If no rider accepts within 5 minutes, widen the radius, re-alert, and notify the admin after 10 minutes.</li>
+</ol>
+<h3>8.3 The stops</h3>
+<ul>
+<li>The Active tab lists one stop per shop, then the customer. Each stop shows shop name, landmark, map link and call button.</li>
+<li>At a shop, the rider checks the goods and taps Picked up. That stop becomes PICKED_UP and the shop is told.</li>
+<li>When the last stop is picked up, the delivery becomes ON_THE_WAY and the customer sees it.</li>
+<li>If a shop is not ready or has refused, the rider taps Skip stop, which the server accepts only for REJECTED or cancelled parts.</li>
+</ul>
+<h3>8.4 Delivery code</h3>
+<ul>
+<li>A 4-digit code is generated at payment time, stored only as an HMAC, and shown to the customer.</li>
+<li>The rider enters it at drop-off. At most 5 wrong attempts, then the delivery locks and an admin is alerted. Success records the rider, time and position.</li>
+<li>The merchant never sees the code.</li>
+</ul>
+<h3>8.5 Tracking</h3>
+<p>The customer page polls every 10 seconds for status and, once ON_THE_WAY, the rider's last known location (rounded). If load grows, replace polling with Server-Sent Events without changing the data model.</p>
+<h3>8.6 Service targets</h3>
+<table>
+<tr><th>Measure</th><th>Target in the pilot</th></tr>
+<tr><td>Shop marks part ready</td><td>Within 15 minutes of payment</td></tr>
+<tr><td>Rider accepts a job</td><td>Within 5 minutes of the offer</td></tr>
+<tr><td>Delivery after last pickup</td><td>Within 30 minutes</td></tr>
+<tr><td>Failed deliveries</td><td>Under 3%</td></tr>
+</table>
+<h2 id="s9">9. Wallet, ledger and withdrawals</h2>
+<p>Merchants and riders earn inside Beez and move the money to M-Pesa with a <b>Withdraw</b> button on their Earnings tab. Admins process requests.</p><figure class="dg"><div class="sc"><svg viewBox="0 0 760 478" style="min-width:640px" role="img" aria-label="Figure 7. A withdrawal, from request to payout (phase 1, manual payout)"><defs><marker id="mk7" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1L9 5L1 9" fill="none" stroke="var(--yd)" stroke-width="1.8"/></marker></defs><rect class="bxy" x="16.0" y="6" width="136.0" height="34" rx="10"/><text class="tx" x="84.0" y="28.0" text-anchor="middle">Merchant or rider</text><line class="ll" x1="84.0" y1="42" x2="84.0" y2="472"/><rect class="bxy" x="164.0" y="6" width="136.0" height="34" rx="10"/><text class="tx" x="232.0" y="28.0" text-anchor="middle">Beez API</text><line class="ll" x1="232.0" y1="42" x2="232.0" y2="472"/><rect class="bxy" x="312.0" y="6" width="136.0" height="34" rx="10"/><text class="tx" x="380.0" y="28.0" text-anchor="middle">SMS</text><line class="ll" x1="380.0" y1="42" x2="380.0" y2="472"/><rect class="bxy" x="460.0" y="6" width="136.0" height="34" rx="10"/><text class="tx" x="528.0" y="28.0" text-anchor="middle">Admin</text><line class="ll" x1="528.0" y1="42" x2="528.0" y2="472"/><rect class="bxy" x="608.0" y="6" width="136.0" height="34" rx="10"/><text class="tx" x="676.0" y="28.0" text-anchor="middle">M-Pesa</text><line class="ll" x1="676.0" y1="42" x2="676.0" y2="472"/><path class="ar" d="M84.0 84L226.0 84" marker-end="url(#mk7)"/><text class="lb" x="158.0" y="78" text-anchor="middle">1 request withdrawal code</text><path class="ar" d="M232.0 116L374.0 116" marker-end="url(#mk7)"/><text class="lb" x="306.0" y="110" text-anchor="middle">2 send 6-digit code</text><path class="ar dsh" d="M380.0 148L90.0 148" marker-end="url(#mk7)"/><text class="lb" x="232.0" y="142" text-anchor="middle">3 code arrives</text><path class="ar" d="M84.0 180L226.0 180" marker-end="url(#mk7)"/><text class="lb" x="158.0" y="174" text-anchor="middle">4 POST /withdrawals {amount, code}</text><rect class="nt" x="44.0" y="195" width="376.0" height="26" rx="8"/><text class="ts" x="232.0" y="212" text-anchor="middle">Check balance, rules, limits. Ledger: AVAILABLE to HELD</text><path class="ar dsh" d="M232.0 244L522.0 244" marker-end="url(#mk7)"/><text class="lb" x="380.0" y="238" text-anchor="middle">5 appears in Withdrawals queue</text><path class="ar" d="M528.0 276L670.0 276" marker-end="url(#mk7)"/><text class="lb" x="602.0" y="270" text-anchor="middle">6 send money (manual, phase 1)</text><path class="ar" d="M528.0 308L238.0 308" marker-end="url(#mk7)"/><text class="lb" x="380.0" y="302" text-anchor="middle">7 mark paid + M-Pesa reference</text><rect class="nt" x="101.6" y="323" width="260.79999999999995" height="26" rx="8"/><text class="ts" x="232.0" y="340" text-anchor="middle">Ledger: HELD out, CASH out. Audit row</text><path class="ar dsh" d="M232.0 372L90.0 372" marker-end="url(#mk7)"/><text class="lb" x="158.0" y="366" text-anchor="middle">8 SMS: paid, with reference</text><path class="ar" d="M528.0 404L238.0 404" marker-end="url(#mk7)"/><text class="lb" x="380.0" y="398" text-anchor="middle">Alt: reject with reason</text><rect class="nt" x="124.0" y="419" width="216.0" height="26" rx="8"/><text class="ts" x="232.0" y="436" text-anchor="middle">Ledger: HELD back to AVAILABLE</text></svg></div><figcaption>Figure 7. A withdrawal, from request to payout (phase 1, manual payout)</figcaption></figure>
+<h3>9.1 Accounts</h3>
+<table>
+<tr><th>Account</th><th>Owner</th><th>Meaning</th></tr>
+<tr><td>AVAILABLE</td><td>Each merchant and rider</td><td>Money the person can withdraw</td></tr>
+<tr><td>HELD</td><td>Each merchant and rider</td><td>Money in a pending withdrawal</td></tr>
+<tr><td>CUSTOMER_FUNDS</td><td>Beez</td><td>Customer money received but not yet earned by anyone (before delivery)</td></tr>
+<tr><td>REVENUE</td><td>Beez</td><td>Commissions kept by Beez</td></tr>
+<tr><td>CASH</td><td>Beez</td><td>The Beez M-Pesa account, mirrored in the books</td></tr>
+<tr><td>PAYOUT_CLEARING</td><td>Beez</td><td>Used when automatic payouts are in flight (phase 2)</td></tr>
+</table>
+<p>Convention: credits are positive and debits negative, and every transaction sums to zero. The balance of a liability account is the sum of its entries.</p>
+<table>
+<tr><th>Event</th><th>Entries</th></tr>
+<tr><td>Customer pays KES 1,920</td><td>CASH -1920, CUSTOMER_FUNDS +1920</td></tr>
+<tr><td>Basket delivered (example in Section 6.3)</td><td>CUSTOMER_FUNDS -1920, merchants AVAILABLE +617, +190, +665, +142, rider AVAILABLE +220, REVENUE +86</td></tr>
+<tr><td>Merchant requests KES 3,850</td><td>merchant AVAILABLE -3850, merchant HELD +3850</td></tr>
+<tr><td>Admin pays it</td><td>merchant HELD -3850, CASH +3850 (cash leaves)</td></tr>
+<tr><td>Admin rejects it</td><td>merchant HELD -3850, merchant AVAILABLE +3850</td></tr>
+<tr><td>Customer refund (partial, KES 150)</td><td>If before delivery: CUSTOMER_FUNDS -150, CASH +150. If after delivery: reverse the shop credit and Beez fee</td></tr>
+</table>
+<h3>9.2 When earnings become available</h3>
+<p>Earnings are credited when the basket is DELIVERED. Optionally, they become withdrawable after a short hold (for example 24 hours) to cover disputes. The hold is a configuration value, and the ledger simply credits to AVAILABLE after that time.</p>
+<h3>9.3 Withdrawal rules (starting values)</h3>
+<table>
+<tr><th>Rule</th><th>Value</th></tr>
+<tr><td>Minimum</td><td>KES 100</td></tr>
+<tr><td>Maximum per request</td><td>Available balance, with a daily cap per user (for example KES 20,000)</td></tr>
+<tr><td>Open requests</td><td>One per user at a time (enforced by a unique index)</td></tr>
+<tr><td>Destination</td><td>The user's registered payout number</td></tr>
+<tr><td>Confirmation</td><td>6-digit SMS code at request time</td></tr>
+<tr><td>Payout number changes</td><td>Take effect after 24 hours, with an SMS to the old and new numbers</td></tr>
+<tr><td>Payout time</td><td>Within one business day in the pilot</td></tr>
+<tr><td>Transfer charge</td><td>Absorbed by Beez in the pilot (decision to confirm)</td></tr>
+</table>
+<h3>9.4 API</h3>
+<pre><code>POST /api/v1/withdrawals/code            (auth) sends the confirmation SMS
+POST /api/v1/withdrawals                 (auth) { "amountKes": 3850, "code": "482913" }  -&gt; 201 { "no": "W-101", "status": "REQUESTED" }
+GET  /api/v1/withdrawals/me              (auth) list with statuses
+GET  /api/v1/earnings/me                 (auth) available, held, delivered this week, history
+
+GET  /api/v1/admin/withdrawals?status=REQUESTED
+POST /api/v1/admin/withdrawals/{id}/pay      { "mpesaRef": "SJK70X1B5" }     (recent authenticator code required)
+POST /api/v1/admin/withdrawals/{id}/reject   { "reason": "Number mismatch" } (recent authenticator code required)</code></pre>
+<h3>9.5 Request handling (one transaction)</h3>
+<pre><code>1. Verify the SMS code (single use, 5 tries).
+2. Lock the user's AVAILABLE account row. balance = SUM(entries). Reject if amount &gt; balance.
+3. Check minimum, daily cap, and that no open withdrawal exists.
+4. Insert ledger txn WITHDRAWAL_HOLD: AVAILABLE -amount, HELD +amount.
+5. Insert withdrawal (REQUESTED) referencing the hold txn. Commit.
+6. Outbox: admin alert, user confirmation.</code></pre>
+<h3>9.6 Paying a withdrawal</h3>
+<p><b>Phase 1 (manual).</b> The admin sends the money from the Beez M-Pesa account to the user's number, then marks the request paid with the reference. The system writes the ledger entries, stores who did it, writes an audit row, and sends an SMS. Rejection returns the held amount and records a reason.</p>
+<p><b>Phase 2 (automatic).</b> After Safaricom approves business-to-customer payouts for the account, the system calls the payout API, moves the request to PROCESSING, and waits for the result callback. On success it marks PAID. On failure it retries safely once, then returns the hold and alerts an admin. Large amounts can require admin approval before the call. M-Pesa returns the receiver's registered name, which can be compared with the Beez name as a fraud check.</p>
+<h3>9.7 Controls</h3>
+<ul>
+<li>Every payout action needs a recent authenticator code and writes an audit row.</li>
+<li>Two-person approval for amounts above a threshold (for example KES 20,000).</li>
+<li>Daily reconciliation: total of PAID withdrawals equals cash out in the M-Pesa statement. Any difference raises an alert.</li>
+<li>Velocity checks: alert on many withdrawals soon after a payout number change, or many accounts paid to one number.</li>
+<li>Balances come only from the ledger. There is no editable balance column.</li>
+</ul>
+<h3>9.8 Customer-facing and user-facing messages</h3>
+<table>
+<tr><th>Event</th><th>Message</th></tr>
+<tr><td>Request accepted</td><td>"We got your withdrawal of KES 3,850. We will pay you on M-Pesa, usually within a day."</td></tr>
+<tr><td>Paid</td><td>"Paid KES 3,850 to your M-Pesa. Reference SJK70X1B5."</td></tr>
+<tr><td>Rejected</td><td>"We could not pay your withdrawal: [reason]. The money is back in your balance."</td></tr>
+</table>
+<h2 id="s10">10. Authentication and authorization</h2>
+<p><em>Authentication</em> answers "who are you?" and <em>authorization</em> answers "what may you do?". Both are enforced on the server. This section is the full authentication design, merged into the architecture.</p>
+<h3>10.1 One method per kind of risk</h3>
+<table>
+<tr><th>Actor</th><th>Method</th><th>Session</th><th>Why</th></tr>
+<tr><td>Merchant, rider</td><td>Phone number + 6-digit SMS code (voice call fallback)</td><td>Access token 15 min + rotating refresh cookie about 60 days</td><td>No password to forget, phone already tied to M-Pesa</td></tr>
+<tr><td>Customer</td><td>None. M-Pesa payment proves the phone. A random link grants access to one basket</td><td>Capability token per basket</td><td>Zero friction at checkout</td></tr>
+<tr><td>Admin</td><td>Email + password + authenticator code</td><td>About 8 hours, no long refresh</td><td>Highest privilege, strongest method</td></tr>
+<tr><td>M-Pesa and SMS callbacks</td><td>Secret path, HTTPS, status verification</td><td>None</td><td>Machine to machine</td></tr>
+</table><figure class="dg"><div class="sc"><svg viewBox="0 0 760 510" style="min-width:640px" role="img" aria-label="Figure 8. Sign-in with a phone code, silent refresh, and replay detection"><defs><marker id="mk8" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1L9 5L1 9" fill="none" stroke="var(--yd)" stroke-width="1.8"/></marker></defs><rect class="bxy" x="16.0" y="6" width="173.0" height="34" rx="10"/><text class="tx" x="102.5" y="28.0" text-anchor="middle">Phone (PWA)</text><line class="ll" x1="102.5" y1="42" x2="102.5" y2="504"/><rect class="bxy" x="201.0" y="6" width="173.0" height="34" rx="10"/><text class="tx" x="287.5" y="28.0" text-anchor="middle">Beez API</text><line class="ll" x1="287.5" y1="42" x2="287.5" y2="504"/><rect class="bxy" x="386.0" y="6" width="173.0" height="34" rx="10"/><text class="tx" x="472.5" y="28.0" text-anchor="middle">SMS provider</text><line class="ll" x1="472.5" y1="42" x2="472.5" y2="504"/><rect class="bxy" x="571.0" y="6" width="173.0" height="34" rx="10"/><text class="tx" x="657.5" y="28.0" text-anchor="middle">Database</text><line class="ll" x1="657.5" y1="42" x2="657.5" y2="504"/><path class="ar" d="M102.5 84L281.5 84" marker-end="url(#mk8)"/><text class="lb" x="195.0" y="78" text-anchor="middle">1 POST /auth/otp/request</text><rect class="nt" x="173.1" y="99" width="228.79999999999998" height="26" rx="8"/><text class="ts" x="287.5" y="116" text-anchor="middle">Normalise, rate limit, make code</text><path class="ar" d="M287.5 148L651.5 148" marker-end="url(#mk8)"/><text class="lb" x="472.5" y="142" text-anchor="middle">2 store HMAC of code, expiry</text><path class="ar" d="M287.5 180L466.5 180" marker-end="url(#mk8)"/><text class="lb" x="380.0" y="174" text-anchor="middle">3 send SMS</text><path class="ar dsh" d="M472.5 212L108.5 212" marker-end="url(#mk8)"/><text class="lb" x="287.5" y="206" text-anchor="middle">4 code arrives</text><path class="ar" d="M102.5 244L281.5 244" marker-end="url(#mk8)"/><text class="lb" x="195.0" y="238" text-anchor="middle">5 POST /auth/otp/verify</text><rect class="nt" x="163.5" y="259" width="248.0" height="26" rx="8"/><text class="ts" x="287.5" y="276" text-anchor="middle">Attempts + 1, constant-time compare</text><path class="ar" d="M287.5 308L651.5 308" marker-end="url(#mk8)"/><text class="lb" x="472.5" y="302" text-anchor="middle">6 find or create user, store refresh hash</text><path class="ar dsh" d="M287.5 340L108.5 340" marker-end="url(#mk8)"/><text class="lb" x="195.0" y="334" text-anchor="middle">7 access token + refresh cookie</text><path class="ar" d="M102.5 372L281.5 372" marker-end="url(#mk8)"/><text class="lb" x="195.0" y="366" text-anchor="middle">8 later: POST /auth/refresh</text><path class="ar dsh" d="M287.5 404L108.5 404" marker-end="url(#mk8)"/><text class="lb" x="195.0" y="398" text-anchor="middle">9 rotated: new tokens</text><path class="ar" d="M102.5 436L281.5 436" marker-end="url(#mk8)"/><text class="lb" x="195.0" y="430" text-anchor="middle">10 old token replayed</text><path class="ar dsh" d="M287.5 468L108.5 468" marker-end="url(#mk8)"/><text class="lb" x="195.0" y="462" text-anchor="middle">11 401, whole family revoked</text></svg></div><figcaption>Figure 8. Sign-in with a phone code, silent refresh, and replay detection</figcaption></figure>
+<h3>10.2 Authentication tables</h3>
+<pre><code>CREATE TABLE users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  role VARCHAR(16) NOT NULL CHECK (role IN ('MERCHANT','RIDER','ADMIN')),
+  phone VARCHAR(16) UNIQUE, email VARCHAR(255) UNIQUE, password_hash VARCHAR(255), totp_secret_enc BYTEA,
+  display_name VARCHAR(120), language VARCHAR(5) NOT NULL DEFAULT 'sw',
+  status VARCHAR(16) NOT NULL DEFAULT 'ACTIVE' CHECK (status IN ('PENDING','ACTIVE','SUSPENDED','DELETED')),
+  token_version INTEGER NOT NULL DEFAULT 0, failed_logins INTEGER NOT NULL DEFAULT 0, locked_until TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(), last_login_at TIMESTAMPTZ,
+  CHECK ((role='ADMIN' AND email IS NOT NULL AND password_hash IS NOT NULL) OR (role&lt;&gt;'ADMIN' AND phone IS NOT NULL)));
+
+CREATE TABLE otp_challenges (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(), phone VARCHAR(16) NOT NULL,
+  purpose VARCHAR(16) NOT NULL DEFAULT 'LOGIN',          -- LOGIN or WITHDRAWAL
+  code_hmac BYTEA NOT NULL, channel VARCHAR(8) NOT NULL DEFAULT 'SMS',
+  attempts SMALLINT NOT NULL DEFAULT 0, max_attempts SMALLINT NOT NULL DEFAULT 5,
+  expires_at TIMESTAMPTZ NOT NULL, consumed_at TIMESTAMPTZ, requested_ip INET, created_at TIMESTAMPTZ NOT NULL DEFAULT now());
+
+CREATE TABLE refresh_tokens (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(), user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  family_id UUID NOT NULL, token_hash BYTEA NOT NULL UNIQUE, expires_at TIMESTAMPTZ NOT NULL,
+  rotated_at TIMESTAMPTZ, revoked_at TIMESTAMPTZ, created_ip INET, user_agent VARCHAR(255), created_at TIMESTAMPTZ NOT NULL DEFAULT now());
+
+CREATE TABLE auth_events (
+  id BIGSERIAL PRIMARY KEY, user_id UUID, phone_mask VARCHAR(20), event_type VARCHAR(32) NOT NULL,
+  ip INET, user_agent VARCHAR(255), meta JSONB, created_at TIMESTAMPTZ NOT NULL DEFAULT now());
+
+CREATE TABLE admin_backup_codes (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), user_id UUID NOT NULL REFERENCES users(id), code_hash BYTEA NOT NULL, used_at TIMESTAMPTZ);
+CREATE TABLE push_subscriptions (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), user_id UUID NOT NULL REFERENCES users(id),
+  endpoint TEXT NOT NULL UNIQUE, p256dh TEXT NOT NULL, auth TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT now());</code></pre>
+<h3>10.3 Merchant and rider sign-in</h3>
+<ol>
+<li><b>Request.</b> The phone is normalised to +254 form and checked against the rate limits. The server stores an HMAC of a random 6-digit code and sends it by SMS. The reply is identical whether or not the number has an account.</li>
+<li><b>Verify.</b> The attempt counter goes up first, then the code is compared in constant time. A correct code is consumed. The user is found or created. Riders start PENDING_APPROVAL, merchants start ONBOARDING.</li>
+<li><b>Tokens.</b> A 15-minute access token (JSON body) and a rotating refresh token (HttpOnly cookie).</li>
+<li><b>Refresh.</b> Each use rotates the token. If an old token appears again, the whole family is revoked and an alert is raised.</li>
+</ol>
+<table>
+<tr><th>OTP setting</th><th>Value</th></tr>
+<tr><td>Code</td><td>6 digits from <code>SecureRandom</code>, valid 5 minutes, single use, 5 attempts</td></tr>
+<tr><td>Stored as</td><td>HMAC-SHA256(secret key, challengeId + ":" + code). Never plain or plain-hashed</td></tr>
+<tr><td>Resend</td><td>After 60 seconds. A new code invalidates earlier ones</td></tr>
+<tr><td>Voice fallback</td><td>"Call me with my code": an automated call reads the digits twice, slowly</td></tr>
+<tr><td>Allowed numbers</td><td>Kenyan mobile numbers (+254) while Kenya is the only market</td></tr>
+</table>
+<h3>10.4 Customers without accounts</h3>
+<ul>
+<li>The tracking token is at least 128 random bits, shown once and sent by SMS, and stored only as a SHA-256 hash.</li>
+<li>It opens one basket. Phone numbers of other people are masked. Responses are not cached and do not send a referrer.</li>
+<li>It stays valid for 7 days after delivery. The device keeps recent tokens so the Track tab can list recent orders.</li>
+<li><b>Spam controls:</b> at most 3 unpaid baskets per phone per hour, one STK Push per basket per 60 seconds, per-IP limits, and an invisible challenge that is switched on only if abuse appears.</li>
+<li><b>Delivery code:</b> four digits, HMAC-stored, 5 attempts, then lock and alert.</li>
+</ul>
+<h3>10.5 Tokens and sessions</h3>
+<table>
+<tr><th></th><th>Access token</th><th>Refresh token</th></tr>
+<tr><td>Format</td><td>Signed JWT (claims: sub, role, mid or rid, ver, jti, iss, aud, iat, exp)</td><td>Opaque 256-bit random value</td></tr>
+<tr><td>Lifetime</td><td>15 minutes</td><td>60 days sliding, 180 days hard cap</td></tr>
+<tr><td>Stored in the browser</td><td>Memory only</td><td>HttpOnly, Secure, SameSite=Lax cookie, path /api/v1/auth</td></tr>
+<tr><td>Stored on the server</td><td>No, but <code>ver</code> is checked against the user's token_version</td><td>SHA-256 hash, family ID, rotation timestamps</td></tr>
+<tr><td>Revoking</td><td>Bump token_version (suspension, logout everywhere)</td><td>Revoke the family</td></tr>
+</table>
+<ul>
+<li>Signing: HS256 with a 256-bit secret and a <code>kid</code> header for rotation, or EdDSA if more services appear. Reject <code>alg: none</code>.</li>
+<li>The cookie endpoints require a custom header (<code>X-Beez-Client: pwa</code>), an Origin check and no-store caching, which protects them from cross-site requests.</li>
+<li>The PWA refreshes once with a single-flight lock, so several tabs do not trigger reuse detection.</li>
+</ul>
+<h3>10.6 Admin authentication</h3>
+<ul>
+<li>No public sign-up. The first admin is created by a seed command.</li>
+<li>Argon2id (or BCrypt cost 12+) passwords, at least 12 characters, checked against common-password lists.</li>
+<li>TOTP authenticator with encrypted secrets and 8 single-use backup codes.</li>
+<li>Lock for 15 minutes after 5 wrong passwords, doubling on repeats. One generic error for wrong email or password.</li>
+<li>Sensitive actions (approve, suspend, mark paid, refund) need a fresh authenticator code within 10 minutes and write an audit row.</li>
+</ul>
+<h3>10.7 Authorization</h3>
+<table>
+<tr><th>Control</th><th>How it is enforced</th></tr>
+<tr><td>Role gates</td><td>Route rules and <code>@PreAuthorize</code> by role</td></tr>
+<tr><td>Ownership</td><td>Queries are scoped by the caller: <code>findByIdAndMerchantId(id, principal.merchantId())</code>. Another person's record returns 404, never 403</td></tr>
+<tr><td>Status gates</td><td>Merchants must be ACTIVE and approved to be public. Riders must be ACTIVE, available and recently located to see jobs</td></tr>
+<tr><td>State machine</td><td>Only valid transitions (Section 5), checked in the service</td></tr>
+<tr><td>Atomic claims</td><td>Job acceptance and withdrawals use single conditional updates or locked rows</td></tr>
+<tr><td>Admin power</td><td>Separate route group, authenticator freshness, audit log</td></tr>
+</table>
+<pre><code>http.csrf(c -&gt; c.disable()).sessionManagement(s -&gt; s.sessionCreationPolicy(STATELESS))
+  .authorizeHttpRequests(a -&gt; a
+     .requestMatchers("/api/v1/auth/otp/**","/api/v1/auth/refresh","/api/v1/auth/admin/login","/api/v1/auth/admin/mfa").permitAll()
+     .requestMatchers("/api/v1/public/**","/webhooks/mpesa/**").permitAll()
+     .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+     .requestMatchers("/api/v1/riders/**").hasAnyRole("RIDER","ADMIN")
+     .requestMatchers("/api/v1/merchants/**").hasAnyRole("MERCHANT","ADMIN")
+     .anyRequest().authenticated())
+  .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);</code></pre>
+<h3>10.8 Rate limits</h3>
+<table>
+<tr><th>Target</th><th>Limit</th></tr>
+<tr><td>Login codes per phone</td><td>5 per hour, 10 per day, 1 per 60 seconds</td></tr>
+<tr><td>Login codes per IP</td><td>20 per hour</td></tr>
+<tr><td>Code guesses</td><td>5 per code, 15 per phone per hour</td></tr>
+<tr><td>Withdrawal codes</td><td>3 per hour per user</td></tr>
+<tr><td>Admin passwords</td><td>5 then a 15-minute lock</td></tr>
+<tr><td>Baskets per phone, unpaid</td><td>3 per hour</td></tr>
+<tr><td>Tracking lookups</td><td>60 per minute per IP</td></tr>
+<tr><td>Delivery code attempts</td><td>5 per delivery</td></tr>
+<tr><td>Daily SMS spend</td><td>A hard cap with alerts</td></tr>
+</table>
+<h3>10.9 Machine-to-machine callbacks</h3>
+<p>The M-Pesa callback is protected by a secret path segment, HTTPS, an optional source address allow-list from Safaricom's current documentation, and above all by verification: after a success callback the server queries the transaction status and checks amount and reference before marking anything paid. Callbacks are stored raw and processed once.</p>
+<h3>10.10 Low-literacy sign-in</h3>
+<ul>
+<li>Big two-button language choice with a speaker icon, remembered on the device.</li>
+<li>Phone entry with a large numeric keypad and automatic formatting. Code entry in six big boxes with autofill (<code>autocomplete="one-time-code"</code> and WebOTP).</li>
+<li>"Listen" buttons, the voice-call code, short messages with icons, no text puzzles.</li>
+<li>Long sessions, so most users rarely see the code screen again.</li>
+</ul>
+<h3>10.11 Authentication error codes</h3>
+<table>
+<tr><th>HTTP</th><th>Code</th><th>Meaning</th></tr>
+<tr><td>400</td><td>invalid_phone, invalid_code, code_expired</td><td>Bad number, wrong code (with attempts left), expired code</td></tr>
+<tr><td>401</td><td>unauthenticated, refresh_invalid, refresh_reused</td><td>No valid token, bad refresh, reuse detected and family revoked</td></tr>
+<tr><td>403</td><td>forbidden, account_pending</td><td>Role not allowed, rider not yet approved</td></tr>
+<tr><td>404</td><td>not_found</td><td>Missing or not yours</td></tr>
+<tr><td>409</td><td>role_conflict</td><td>Phone already registered under another role</td></tr>
+<tr><td>423</td><td>delivery_locked</td><td>Too many wrong delivery codes</td></tr>
+<tr><td>429</td><td>rate_limited, too_many_attempts</td><td>Limits hit, with retry time</td></tr>
+<tr><td>503</td><td>sms_unavailable</td><td>Provider failure or daily cap</td></tr>
+</table>
+<h2 id="s11">11. Voice pipeline</h2>
+<p><b>Current implementation:</b> The diagram below is conceptual; the live flow uses an authenticated multipart API rather than signed object storage. Audio is sent to OpenAI for processing and is not persisted by Beez.</p>
+<p>Voice is the heart of Beez: merchants say what they sell, and the system turns it into a product list. The same pipeline serves onboarding and the Products tab.</p><figure class="dg"><div class="sc"><svg viewBox="0 0 760 164" style="min-width:640px" role="img" aria-label="Figure 9. From spoken words to a published product list"><defs><marker id="mk9" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1L9 5L1 9" fill="none" stroke="var(--yd)" stroke-width="1.8"/></marker></defs><rect class="bxy" x="14" y="16" width="160" height="36" rx="10"/><text class="tx2" x="94.0" y="39.0" text-anchor="middle">Record audio</text><path class="ar" d="M174 34L204 34" marker-end="url(#mk9)"/><rect class="bx" x="204" y="16" width="160" height="36" rx="10"/><text class="tx2" x="284.0" y="39.0" text-anchor="middle">Upload (signed URL)</text><path class="ar" d="M364 34L394 34" marker-end="url(#mk9)"/><rect class="bx" x="394" y="16" width="160" height="36" rx="10"/><text class="tx2" x="474.0" y="39.0" text-anchor="middle">Speech to text</text><path class="ar" d="M554 34L584 34" marker-end="url(#mk9)"/><rect class="bx" x="584" y="16" width="160" height="36" rx="10"/><text class="tx2" x="664.0" y="39.0" text-anchor="middle">LLM extraction</text><path class="ar" d="M734 34V62H94V84" marker-end="url(#mk9)"/><rect class="bx" x="14" y="84" width="160" height="36" rx="10"/><text class="tx2" x="94.0" y="107.0" text-anchor="middle">Validate</text><path class="ar" d="M174 102L204 102" marker-end="url(#mk9)"/><rect class="bx" x="204" y="84" width="160" height="36" rx="10"/><text class="tx2" x="284.0" y="107.0" text-anchor="middle">Read back aloud</text><path class="ar" d="M364 102L394 102" marker-end="url(#mk9)"/><rect class="bxy" x="394" y="84" width="160" height="36" rx="10"/><text class="tx2" x="474.0" y="107.0" text-anchor="middle">Merchant confirms</text><path class="ar" d="M554 102L584 102" marker-end="url(#mk9)"/><rect class="bxy" x="584" y="84" width="160" height="36" rx="10"/><text class="tx2" x="664.0" y="107.0" text-anchor="middle">Publish products</text><text class="ts" x="380" y="150" text-anchor="middle">Nothing goes live until the merchant confirms. Audio and text are kept (with consent) to improve accuracy.</text></svg></div><figcaption>Figure 9. From spoken words to a published product list</figcaption></figure>
+<table>
+<tr><th>Step</th><th>Detail</th></tr>
+<tr><td>Record</td><td>Browser <code>MediaRecorder</code>, up to 60 seconds, with English or Swahili selected by the merchant</td></tr>
+<tr><td>Upload</td><td>Authenticated multipart request, maximum 10 MB. Audio is processed in memory and is not persisted by Beez</td></tr>
+<tr><td>Speech to text</td><td>OpenAI adapter behind <code>SpeechToText</code>, configured by deployment secrets and bounded request timeouts</td></tr>
+<tr><td>Extraction</td><td>LLM called with a strict JSON schema: product name, optional unit, price in KES, confidence. Handles code-switching, number words and Sheng</td></tr>
+<tr><td>Validation</td><td>Reject negative or absurd prices, merge duplicates, flag low confidence rows, normalise units</td></tr>
+<tr><td>Read back</td><td>The list is shown as text and can optionally be read aloud by browser speech synthesis</td></tr>
+<tr><td>Confirm</td><td>Merchant edits or deletes rows and taps Publish. Only then do products go live</td></tr>
+<tr><td>Fallback</td><td>Manual product entry is always available; voice failures never block a merchant</td></tr>
+</table>
+<pre><code>{ "products": [ { "name": "Sugar", "unit": "kg", "priceKes": 180, "confidence": 0.93 },
+                { "name": "Flour", "unit": "kg", "priceKes": 140, "confidence": 0.91 } ],
+  "unparsed": [] }</code></pre>
+<h3>11.1 Quality and cost control</h3>
+<ul>
+<li>Measure per recording: edits made by the merchant, rows deleted, time to confirm. These are the accuracy numbers that matter.</li>
+<li>Keep a test set of at least 50 real merchant recordings in Swahili, English and mixed speech, and rerun it for every provider or model change.</li>
+<li>Limit each merchant to 10 requests and 50 MB of audio per hour; each upload is capped at 10 MB and 60 seconds.</li>
+<li>Ask for consent before recording and state that audio is sent to Beez/OpenAI. Beez does not persist audio or transcripts.</li>
+<li>Language support grows one language at a time behind the same interface.</li>
+</ul>
+<h2 id="s12">12. Notifications</h2>
+<p>All alerts go through one outbox: a notification row is written in the same transaction as the event, and a worker sends it after commit. This means no alert is lost and none is sent for a rolled-back change.</p>
+<table>
+<tr><th>Event</th><th>To</th><th>Channels</th><th>Fallback</th></tr>
+<tr><td>Basket paid</td><td>Each shop</td><td>Transactional SMS outbox with up to three retries</td><td>Shop dashboard order list remains authoritative</td></tr>
+<tr><td>Basket paid</td><td>Customer</td><td>SMS receipt with tracking link and delivery code</td><td>None</td></tr>
+<tr><td>Delivery offerable</td><td>Nearby riders</td><td>Web Push and Jobs list</td><td>Wider radius after 2 minutes</td></tr>
+<tr><td>Rider assigned, each pickup, on the way</td><td>Customer</td><td>Track page, SMS for key steps</td><td>None</td></tr>
+<tr><td>Shop late or rejected</td><td>Customer</td><td>Track page and SMS</td><td>None</td></tr>
+<tr><td>Delivered</td><td>Customer, shops, rider</td><td>Track page, dashboards</td><td>None</td></tr>
+<tr><td>Shop or rider approved or rejected</td><td>The person</td><td>SMS and push</td><td>None</td></tr>
+<tr><td>Withdrawal requested, paid, rejected</td><td>The person (and admin for new requests)</td><td>SMS and dashboard</td><td>None</td></tr>
+<tr><td>Security: new device, number change, refresh reuse</td><td>The person and admin</td><td>SMS</td><td>None</td></tr>
+</table>
+<ul>
+<li>Each notification stores status, attempts, sent and acknowledged times. Retries use backoff, up to 3 times.</li>
+<li>Push subscriptions belong to the signed-in user, and are removed on logout or when another user signs in on the same browser.</li>
+<li>SMS templates are short, in the user's language, and never contain full phone numbers or secrets, except the one-time codes themselves.</li>
+<li>Quiet hours apply to non-urgent messages. Order alerts are always sent.</li>
+</ul>
+<h2 id="s13">13. API catalogue</h2>
+<p>REST with JSON, versioned under <code>/api/v1</code>. Errors use one shape: <code>{ "error": "code", "message": "...", "details": {}, "requestId": "..." }</code>. Lists are paginated with a cursor. Money is always whole KES in <code>*Kes</code> fields. State-changing calls accept an <code>Idempotency-Key</code> header.</p>
+<h3>13.1 Public (guest)</h3><table><tr><th>Method and path</th><th>Who</th><th>Purpose</th></tr><tr><td><code>GET /public/zones</code></td><td>Guest</td><td>Markets and neighbourhoods served</td></tr><tr><td><code>GET /public/shops?zone=&amp;category=&amp;q=</code></td><td>Guest</td><td>Browse and search shops</td></tr><tr><td><code>GET /public/m/{slug}</code></td><td>Guest</td><td>Shop page: details, video, products</td></tr><tr><td><code>POST /public/baskets</code></td><td>Guest</td><td>Create a basket across shops, get totals</td></tr><tr><td><code>POST /public/baskets/{token}/pay</code></td><td>Guest</td><td>Start M-Pesa payment</td></tr><tr><td><code>GET /public/baskets/{token}</code></td><td>Token</td><td>Status, vendors, rider, stops, code</td></tr><tr><td><code>POST /public/baskets/{token}/items/{id}/decision</code></td><td>Token</td><td>Choose replacement or refund for a missing item</td></tr></table>
+<h3>13.2 Authentication</h3><table><tr><th>Method and path</th><th>Who</th><th>Purpose</th></tr><tr><td><code>POST /auth/otp/request</code>, <code>/auth/otp/verify</code></td><td>Public</td><td>Phone code sign-in</td></tr><tr><td><code>POST /auth/refresh</code>, <code>/auth/logout</code>, <code>/auth/logout-all</code></td><td>Cookie or user</td><td>Session control</td></tr><tr><td><code>GET /auth/me</code></td><td>User</td><td>Current user, role, status</td></tr><tr><td><code>POST /auth/admin/login</code>, <code>/auth/admin/mfa</code></td><td>Public</td><td>Admin sign-in with authenticator</td></tr><tr><td><code>POST /push/subscribe</code>, <code>DELETE /push/subscribe</code></td><td>User</td><td>Web Push subscription</td></tr></table>
+<h3>13.3 Merchant</h3><table><tr><th>Method and path</th><th>Who</th><th>Purpose</th></tr><tr><td><code>POST /merchants</code>, <code>PATCH /merchants/me</code></td><td>Merchant</td><td>Create and edit the shop</td></tr><tr><td><code>POST /merchants/me/video/upload-url</code>, <code>/video/confirm</code></td><td>Merchant</td><td>Intro video upload</td></tr><tr><td><code>POST /voice-products</code>, <code>POST /voice-products/{id}/confirm</code></td><td>Merchant</td><td>Voice to product list, then confirm</td></tr><tr><td><code>GET/POST /merchants/me/products</code>, <code>PATCH/DELETE /products/{id}</code></td><td>Merchant</td><td>Manage products, stock switch</td></tr><tr><td><code>GET /merchants/me/orders?status=</code></td><td>Merchant</td><td>Own vendor orders</td></tr><tr><td><code>POST /vendor-orders/{id}/ready</code>, <code>/reject</code></td><td>Merchant</td><td>Ready for pickup, or cannot fill</td></tr><tr><td><code>POST /notifications/{id}/ack</code></td><td>Merchant</td><td>Acknowledge an alert</td></tr><tr><td><code>GET /earnings/me</code></td><td>Merchant, rider</td><td>Balances and history</td></tr></table>
+<h3>13.4 Rider</h3><table><tr><th>Method and path</th><th>Who</th><th>Purpose</th></tr><tr><td><code>POST /riders</code>, <code>PATCH /riders/me</code></td><td>Rider</td><td>Register and edit</td></tr><tr><td><code>POST /riders/me/availability</code>, <code>/location</code></td><td>Rider</td><td>Online or offline, position</td></tr><tr><td><code>GET /riders/me/jobs</code></td><td>Rider (approved)</td><td>Open offers</td></tr><tr><td><code>POST /deliveries/{id}/accept</code></td><td>Rider</td><td>Take a job (first wins)</td></tr><tr><td><code>POST /deliveries/{id}/stops/{stopId}/pickup</code>, <code>/skip</code></td><td>Rider</td><td>Confirm or skip a shop stop</td></tr><tr><td><code>POST /deliveries/{id}/deliver</code></td><td>Rider</td><td>Enter the 4-digit code</td></tr><tr><td><code>POST /deliveries/{id}/not-found</code></td><td>Rider</td><td>Customer cannot be found</td></tr></table>
+<h3>13.5 Wallet</h3><table><tr><th>Method and path</th><th>Who</th><th>Purpose</th></tr><tr><td><code>POST /withdrawals/code</code>, <code>POST /withdrawals</code></td><td>Merchant, rider</td><td>Confirmation code, then request</td></tr><tr><td><code>GET /withdrawals/me</code></td><td>Merchant, rider</td><td>Own requests</td></tr></table>
+<h3>13.6 Admin</h3><table><tr><th>Method and path</th><th>Who</th><th>Purpose</th></tr><tr><td><code>GET /admin/overview</code>, <code>/admin/metrics</code></td><td>Admin</td><td>Health and charts</td></tr><tr><td><code>GET /admin/approvals</code>, <code>POST /admin/merchants/{id}/approve|reject</code>, <code>/admin/riders/{id}/approve|reject</code></td><td>Admin</td><td>Approvals</td></tr><tr><td><code>GET /admin/baskets</code>, <code>POST /admin/deliveries/{id}/confirm</code></td><td>Admin</td><td>Monitor and manual actions</td></tr><tr><td><code>GET /admin/payments</code>, <code>GET /admin/ledger/unsettled</code></td><td>Admin</td><td>Money in and balances</td></tr><tr><td><code>GET /admin/withdrawals</code>, <code>POST /admin/withdrawals/{id}/pay|reject</code></td><td>Admin</td><td>Withdrawal queue</td></tr><tr><td><code>GET /admin/refunds</code>, <code>POST /admin/refunds/{id}/done</code></td><td>Admin</td><td>Refunds</td></tr><tr><td><code>POST /admin/users/{id}/suspend|restore|logout-all</code></td><td>Admin</td><td>Account control</td></tr><tr><td><code>GET /admin/audit</code></td><td>Admin</td><td>Audit log</td></tr></table>
+<h3>13.7 Webhooks</h3><table><tr><th>Method and path</th><th>Who</th><th>Purpose</th></tr><tr><td><code>POST /webhooks/mpesa/{secret}/stk</code></td><td>Safaricom</td><td>STK Push result</td></tr><tr><td><code>POST /webhooks/mpesa/{secret}/payout</code></td><td>Safaricom</td><td>Payout result (phase 2)</td></tr><tr><td><code>POST /webhooks/sms/{secret}</code></td><td>SMS provider</td><td>Delivery reports</td></tr></table>
+<h2 id="s14">14. Admin console architecture</h2>
+<p>The admin console is a separate route group and bundle in the same codebase, served under <code>/admin</code> and protected by email, password and an authenticator code. It reads through the same services as the apps and never touches tables directly.</p>
+<table>
+<tr><th>Tab</th><th>Reads</th><th>Actions (all audited)</th></tr>
+<tr><td>Overview</td><td>Orders today, paid value, active shops and riders, delivery time, failures, items needing attention</td><td>Jump to work queues</td></tr>
+<tr><td>Approvals</td><td>Merchants and riders waiting, photos, referee details</td><td>Approve, reject with reason</td></tr>
+<tr><td>Orders</td><td>Baskets with vendor orders, stops, timeline</td><td>Confirm delivery, cancel, reassign rider, handle failed delivery</td></tr>
+<tr><td>Payments</td><td>Payment attempts, receipts, stuck and orphan payments</td><td>Re-check status, link to basket</td></tr>
+<tr><td>Withdrawals</td><td>Queue by status</td><td>Mark paid with reference, reject with reason</td></tr>
+<tr><td>Ledger</td><td>Balances per merchant, rider and Beez, transactions</td><td>View only (corrections are new reversing entries)</td></tr>
+<tr><td>Refunds</td><td>Pending and done refunds</td><td>Mark refunded with reference</td></tr>
+<tr><td>Users</td><td>Merchants and riders, status, last seen</td><td>Suspend, restore, sign out everywhere</td></tr>
+<tr><td>Metrics</td><td>Onboarding funnel, orders, repeat customers, delivery times</td><td>None</td></tr>
+<tr><td>Audit log</td><td>Every admin action with before and after</td><td>None (append only)</td></tr>
+</table>
+<ul>
+<li>Sensitive actions require a fresh authenticator code. High-value payouts need a second admin.</li>
+<li>Admin roles can be split later (support, finance, super admin) using the same role mechanism.</li>
+<li>Exports (CSV) are allowed only to finance admins and are logged.</li>
+</ul>
+<h2 id="s15">15. Infrastructure and deployment</h2><figure class="dg"><div class="sc"><svg viewBox="0 0 760 496" style="min-width:640px" role="img" aria-label="Figure 10. Production deployment layout"><defs><marker id="mk10" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1L9 5L1 9" fill="none" stroke="var(--yd)" stroke-width="1.8"/></marker></defs><rect class="bx" x="20" y="10" width="170" height="44" rx="10"/><text class="tx" x="105.0" y="29.0" text-anchor="middle">Users</text><text class="ts" x="105.0" y="45.0" text-anchor="middle">Phones, laptops</text><path class="ar" d="M190 32L214 32" marker-end="url(#mk10)"/><rect class="bxy" x="214" y="10" width="200" height="44" rx="10"/><text class="tx" x="314.0" y="29.0" text-anchor="middle">Cloudflare</text><text class="ts" x="314.0" y="45.0" text-anchor="middle">DNS, CDN, WAF, TLS</text><path class="ar" d="M414 32L438 32" marker-end="url(#mk10)"/><rect class="bx" x="438" y="10" width="150" height="44" rx="10"/><text class="tx" x="513.0" y="29.0" text-anchor="middle">Load balancer</text><text class="ts" x="513.0" y="45.0" text-anchor="middle">Health checks</text><rect class="ctn" x="8" y="70" width="744" height="170" rx="14"/><text class="hd" x="20" y="88">APPLICATION TIER (containers, 2 or more instances)</text><path class="ar" d="M513 54V80H95V96" marker-end="url(#mk10)"/><path class="ar" d="M513 80H259V96" marker-end="url(#mk10)"/><rect class="bx" x="20" y="96" width="150" height="50" rx="10"/><text class="tx" x="95.0" y="118.0" text-anchor="middle">Beez API</text><text class="ts" x="95.0" y="134.0" text-anchor="middle">Spring Boot, stateless</text><rect class="bx" x="184" y="96" width="150" height="50" rx="10"/><text class="tx" x="259.0" y="118.0" text-anchor="middle">Beez API</text><text class="ts" x="259.0" y="134.0" text-anchor="middle">Second instance</text><rect class="bx" x="348" y="96" width="150" height="50" rx="10"/><text class="tx" x="423.0" y="118.0" text-anchor="middle">Worker</text><text class="ts" x="423.0" y="134.0" text-anchor="middle">Jobs, outbox, schedulers</text><rect class="bx" x="512" y="96" width="226" height="50" rx="10"/><text class="tx" x="625.0" y="118.0" text-anchor="middle">Static PWA files</text><text class="ts" x="625.0" y="134.0" text-anchor="middle">Served from CDN cache</text><text class="ts" x="380" y="176" text-anchor="middle">Zero-downtime deploys: start new instances, wait for health, then drain the old ones</text><text class="ts" x="380" y="196" text-anchor="middle">Secrets from a secrets manager or environment, never in the image</text><text class="ts" x="380" y="216" text-anchor="middle">Rate limits and short locks live in Redis so all instances agree</text><path class="ar" d="M380 240L380 262" marker-end="url(#mk10)"/><rect class="ctn" x="8" y="258" width="744" height="126" rx="14"/><text class="hd" x="20" y="276">DATA TIER</text><rect class="bx" x="20" y="290" width="168" height="50" rx="10"/><text class="tx" x="104.0" y="312.0" text-anchor="middle">PostgreSQL primary</text><text class="ts" x="104.0" y="328.0" text-anchor="middle">Managed, daily snapshots</text><rect class="bx" x="202" y="290" width="168" height="50" rx="10"/><text class="tx" x="286.0" y="312.0" text-anchor="middle">Read replica</text><text class="ts" x="286.0" y="328.0" text-anchor="middle">Reports, admin queries</text><rect class="bx" x="384" y="290" width="168" height="50" rx="10"/><text class="tx" x="468.0" y="312.0" text-anchor="middle">Redis</text><text class="ts" x="468.0" y="328.0" text-anchor="middle">Limits, cache, locks</text><rect class="bx" x="566" y="290" width="168" height="50" rx="10"/><text class="tx" x="650.0" y="312.0" text-anchor="middle">Object storage</text><text class="ts" x="650.0" y="328.0" text-anchor="middle">Video, audio, images</text><text class="ts" x="380" y="364" text-anchor="middle">Point-in-time recovery for PostgreSQL. Backups encrypted and copied to a second provider.</text><rect class="ctn" x="8" y="398" width="744" height="86" rx="14"/><text class="hd" x="20" y="416">DELIVERY AND OPERATIONS</text><rect class="bx" x="20" y="424" width="168" height="46" rx="10"/><text class="tx" x="104.0" y="444.0" text-anchor="middle">GitHub Actions</text><text class="ts" x="104.0" y="460.0" text-anchor="middle">Build, test, scan</text><rect class="bx" x="202" y="424" width="168" height="46" rx="10"/><text class="tx" x="286.0" y="444.0" text-anchor="middle">Container registry</text><text class="ts" x="286.0" y="460.0" text-anchor="middle">Versioned images</text><rect class="bx" x="384" y="424" width="168" height="46" rx="10"/><text class="tx" x="468.0" y="444.0" text-anchor="middle">Grafana + Prometheus</text><text class="ts" x="468.0" y="460.0" text-anchor="middle">Metrics and alerts</text><rect class="bx" x="566" y="424" width="168" height="46" rx="10"/><text class="tx" x="650.0" y="444.0" text-anchor="middle">Sentry + log store</text><text class="ts" x="650.0" y="460.0" text-anchor="middle">Errors and logs</text></svg></div><figcaption>Figure 10. Production deployment layout</figcaption></figure>
+<h3>15.1 Environments</h3>
+<table>
+<tr><th>Environment</th><th>Purpose</th><th>Data</th><th>Providers</th></tr>
+<tr><td>Local</td><td>Development with Docker Compose</td><td>Fake data</td><td>Fake SMS, mocked M-Pesa</td></tr>
+<tr><td>Staging</td><td>Full rehearsal, every merge</td><td>Test data</td><td>M-Pesa sandbox, SMS sandbox</td></tr>
+<tr><td>Production</td><td>Real users</td><td>Real data</td><td>Live providers</td></tr>
+</table>
+<h3>15.2 Pipeline</h3>
+<ol>
+<li>Pull request: build, unit and integration tests (Testcontainers with PostgreSQL), dependency and secret scans, lint.</li>
+<li>Merge to main: build the image, push to the registry, deploy to staging, run smoke tests.</li>
+<li>Tagged release: manual approval, deploy to production with rolling update, run smoke tests, automatic rollback on failed health checks.</li>
+<li>Database changes: Flyway migrations written to be backward compatible (add, then migrate, then remove), so old and new instances can run together.</li>
+</ol>
+<h3>15.3 Scaling path</h3>
+<table>
+<tr><th>Stage</th><th>Scale</th><th>Setup</th><th>Rough monthly cost (to verify)</th></tr>
+<tr><td>Pilot</td><td>Under 50 merchants, 100 orders a day</td><td>One small VPS with Docker Compose, managed or single PostgreSQL with nightly backups, object storage</td><td>About USD 20 to 40, plus usage-based speech, LLM and SMS</td></tr>
+<tr><td>Early growth</td><td>Hundreds of merchants, thousands of orders a day</td><td>Two app instances, managed PostgreSQL, Redis, CDN, monitoring</td><td>A few hundred USD</td></tr>
+<tr><td>Scale</td><td>Multiple cities or countries</td><td>Autoscaled containers, read replicas, partitioned ledger and events tables, extract the heaviest module if needed</td><td>Grows with volume and compliance needs</td></tr>
+</table>
+<p>The architecture does not change between stages. Only the number of instances and the managed services around it do. Prices change often, so confirm current provider pricing before budgeting.</p>
+<h3>15.4 Resilience</h3>
+<ul>
+<li>Health endpoints for liveness and readiness. The load balancer removes unhealthy instances.</li>
+<li>Outbox and retries mean provider outages delay alerts but do not lose them.</li>
+<li>If SMS is down, users with a session keep working and new sign-ins use the voice-call fallback. If M-Pesa is down, checkout shows a clear message and no basket is created.</li>
+<li>Backups are restored and tested every quarter. Target recovery point under 15 minutes and recovery time under 2 hours for the pilot.</li>
+</ul>
+<h2 id="s16">16. Observability and operations</h2>
+<table>
+<tr><th>Area</th><th>What to collect</th><th>Alert when</th></tr>
+<tr><td>Availability</td><td>Uptime checks on the app and API, response times, error rate</td><td>Down for 2 minutes, error rate above 2%</td></tr>
+<tr><td>Payments</td><td>STK Push sent, succeeded, failed, pending age, callback lag, orphan payments</td><td>Success rate drops sharply, a payment is pending over 10 minutes, any orphan payment</td></tr>
+<tr><td>Orders and delivery</td><td>Time to ready, to accept, to deliver, failed deliveries, jobs with no rider</td><td>A job unaccepted for 10 minutes, a shop past its ready window</td></tr>
+<tr><td>Wallet</td><td>Requests, time to pay, ledger imbalance checks, daily reconciliation result</td><td>Any ledger transaction that does not sum to zero, a request unpaid over 24 hours, reconciliation mismatch</td></tr>
+<tr><td>Auth</td><td>OTP requests and failures, refresh reuse, admin logins</td><td>OTP spike, any refresh reuse, admin login from a new location, SMS spend near the cap</td></tr>
+<tr><td>Voice</td><td>Latency, failures, edits per recording</td><td>Failure rate above 10%, edits per recording rising</td></tr>
+<tr><td>Infrastructure</td><td>CPU, memory, database connections, disk, queue depth</td><td>Resource pressure, replica lag</td></tr>
+</table>
+<ul>
+<li><b>Logs:</b> structured JSON with a request ID and the basket, payment or withdrawal ID. Phones are masked and secrets are redacted.</li>
+<li><b>Tracing:</b> a basket ID follows one purchase through all modules, so support can see the whole story in one search.</li>
+<li><b>Runbooks:</b> short pages for the common problems: payment stuck, rider not accepting, SMS provider down, ledger mismatch, withdrawal disputed, account takeover report.</li>
+<li><b>On call:</b> in the pilot, one named person with alerts to their phone and a backup contact.</li>
+</ul>
+<h2 id="s17">17. Security and privacy</h2>
+<table>
+<tr><th>Threat</th><th>Main defences</th></tr>
+<tr><td>Account takeover</td><td>OTP limits, HMAC-stored codes, rotating refresh tokens with reuse detection, payout number change delay</td></tr>
+<tr><td>SMS cost abuse</td><td>Country allow-list, per-phone and per-IP limits, daily cap, alerts</td></tr>
+<tr><td>Forged payments</td><td>Secret callback path, status query before marking paid, amount and reference checks, idempotency</td></tr>
+<tr><td>Cross-account access</td><td>Ownership-scoped queries returning 404, role gates, tests for every endpoint</td></tr>
+<tr><td>Theft through withdrawals</td><td>SMS confirmation, one open request, daily caps, admin authenticator, two-person approval above a threshold, reconciliation</td></tr>
+<tr><td>Delivery fraud</td><td>Delivery code with attempt limit, GPS and event records, rider vetting with ID and referee</td></tr>
+<tr><td>Data leak</td><td>Hashes for codes and tokens, encrypted TOTP secrets, masked logs, encrypted backups, least-privilege database users</td></tr>
+<tr><td>Web attacks</td><td>CSP, HSTS, no tokens in storage, CSRF controls on cookie endpoints, input validation, dependency scanning</td></tr>
+<tr><td>Insider misuse</td><td>Audit log, separation of duties, fresh authenticator for sensitive actions</td></tr>
+</table>
+<h3>17.1 Privacy and data protection</h3>
+<ul>
+<li>Collect only what is needed: phone numbers, delivery location, voice and video the merchant chooses to provide, rider ID photos.</li>
+<li>Show a plain notice in Swahili and English, with audio, at first sign-in and at checkout.</li>
+<li>Retention: OTP and refresh records 7 days after expiry, auth events 12 months, order and ledger records as long as accounting and disputes require, then anonymise personal fields.</li>
+<li>Rider ID photos are stored privately, visible only to admins who approve riders, and deleted after a defined period once approved.</li>
+<li>Provide a way to request a copy or deletion of personal data. Deletion anonymises identity while keeping required financial records.</li>
+<li>The Kenya Data Protection Act applies. Check current registration and notification duties with the data protection authority, and have a lawyer review the privacy notice and the terms. This document is technical guidance, not legal advice.</li>
+<li>Money and licensing: holding customer funds and paying out may carry licensing or regulatory duties. Take advice from a financial-services lawyer before launching wallet features at scale.</li>
+</ul>
+<h2 id="s18">18. Testing strategy</h2>
+<table>
+<tr><th>Level</th><th>What is tested</th></tr>
+<tr><td>Unit</td><td>Pricing and fees, ledger entries sum to zero, state transitions, OTP and token logic, phone normalisation, voice-extraction validation</td></tr>
+<tr><td>Integration (Testcontainers)</td><td>Full flows against PostgreSQL: sign-in and refresh, basket to paid to delivered, partial refunds, withdrawals request, pay and reject, concurrency (two riders accepting, two parallel withdrawals)</td></tr>
+<tr><td>Contract</td><td>Daraja, SMS and speech provider calls against recorded responses and sandboxes</td></tr>
+<tr><td>Security</td><td>Role matrix for every endpoint, cross-account access attempts, replayed refresh tokens, forged callbacks, rate limit tests, delivery-code brute force</td></tr>
+<tr><td>Money invariants</td><td>Nightly job: every transaction sums to zero, balances equal the sum of entries, basket total equals parts plus fee, no negative AVAILABLE balance</td></tr>
+<tr><td>End to end</td><td>Playwright flows on a phone viewport: onboard a merchant by voice, build a multi-shop basket, pay in the sandbox, accept and deliver as a rider, withdraw and pay as an admin</td></tr>
+<tr><td>Load</td><td>A realistic rush: many baskets at once, many riders polling, callbacks arriving together</td></tr>
+<tr><td>Field</td><td>Watch real merchants, riders and customers use it. Track onboarding drop-off, voice edits, order success, delivery time</td></tr>
+</table>
+<h2 id="s19">19. Roadmap</h2>
+<table>
+<tr><th>Phase</th><th>Scope</th><th>Done when</th></tr>
+<tr><td>1. Foundation</td><td>Auth, merchants, voice products, shop pages, single-shop baskets, M-Pesa checkout, notifications, rider flow, delivery code, admin approvals, ledger and manual withdrawals</td><td>Five merchants take real orders and get paid through a withdrawal</td></tr>
+<tr><td>2. Baskets</td><td>Multi-shop baskets within a zone, multi-stop deliveries, partial refunds, route proposal, Track timeline per shop</td><td>A customer completes a four-shop basket delivered by one rider</td></tr>
+<tr><td>3. Automation</td><td>Automatic payouts, automatic refunds, reconciliation dashboards, two-person approvals, read replica for reports</td><td>Most withdrawals are paid without manual work</td></tr>
+<tr><td>4. Growth</td><td>More zones, more languages, merchant promotions, repeat-customer features, WhatsApp as an extra channel</td><td>Merchant retention and repeat orders meet targets</td></tr>
+<tr><td>5. Financial layer</td><td>Verified transaction history, merchant trust scores, savings, and lending with a regulated partner</td><td>Regulatory path confirmed and first financing pilot</td></tr>
+</table>
+<p>Because the ledger, baskets and audit trail are in place from phase 1, later phases add features without redesigning the foundations.</p>
+<h2 id="s20">20. Open decisions and risks</h2>
+<table>
+<tr><th>Decision</th><th>Options</th><th>Suggested default</th></tr>
+<tr><td>Kenyan legal entity and M-Pesa till or paybill</td><td>Who owns it and how revenue flows to the main company</td><td>Settle in the founders' agreement before any live money moves</td></tr>
+<tr><td>Merchandise commission and delivery-fee split</td><td>Commission base, rider share, percentage or flat fee</td><td>Sandbox delivery-fee split: 95% to rider and 5% to Beez; merchandise commission remains under review</td></tr>
+<tr><td>Hold period before earnings are withdrawable</td><td>None, 24 hours, longer</td><td>24 hours</td></tr>
+<tr><td>Withdrawal transfer charge</td><td>Beez or user pays</td><td>Beez absorbs in the pilot</td></tr>
+<tr><td>Zones</td><td>How large, who defines them</td><td>One market per zone at first, defined by admin</td></tr>
+<tr><td>Job offered at all ready or earlier</td><td>All shops ready, or rolling dispatch</td><td>All ready first, rolling dispatch later</td></tr>
+<tr><td>Link format for tracking</td><td><code>/track/{token}</code> or <code>/t/{token}</code></td><td><code>/track/{token}</code></td></tr>
+<tr><td>Discover marketplace in the pilot</td><td>Browse shops or links only</td><td>Browse within one zone, with links as the main way in</td></tr>
+</table>
+<h3>Known risks</h3>
+<ul>
+<li><b>Operational complexity of baskets:</b> slow shops delay everyone. Mitigate with ready windows, alerts and the drop-a-part option.</li>
+<li><b>Money handling:</b> errors lose real money. Mitigate with the ledger, invariants, reconciliation, and manual approval at first.</li>
+<li><b>Regulation:</b> holding customer funds and paying out may need licences. Get advice early.</li>
+<li><b>Voice accuracy in local languages:</b> measure on real recordings before promising languages.</li>
+<li><b>Solo-developer capacity:</b> keep scope in phases and automate tests and deploys.</li>
+<li><b>Provider dependence:</b> keep interfaces so M-Pesa, SMS, speech and LLM providers can be replaced.</li>
+</ul>
+<h2 id="s21">21. Glossary</h2>
+<table>
+<tr><th>Term</th><th>Meaning</th></tr>
+<tr><td>Basket</td><td>One customer purchase across one or more shops, paid once</td></tr>
+<tr><td>Vendor order</td><td>The part of a basket that belongs to one shop</td></tr>
+<tr><td>Stop</td><td>One pickup (a shop) or the drop-off in a delivery</td></tr>
+<tr><td>Zone</td><td>A market or neighbourhood where shops can be combined in one basket</td></tr>
+<tr><td>Ledger</td><td>The append-only record of every money movement, balanced to zero</td></tr>
+<tr><td>Withdrawal</td><td>A request by a merchant or rider to move earnings to M-Pesa</td></tr>
+<tr><td>STK Push</td><td>The M-Pesa prompt that asks a customer to approve a payment on their phone</td></tr>
+<tr><td>OTP</td><td>One-time code sent by SMS or voice call</td></tr>
+<tr><td>Capability link</td><td>A link with an unguessable token that grants access to one resource</td></tr>
+<tr><td>Idempotent</td><td>Safe to repeat: doing it twice has the same effect as once</td></tr>
+<tr><td>Outbox</td><td>A table of messages written with the event, sent after the transaction commits</td></tr>
+<tr><td>PWA</td><td>Progressive web app: a website that installs and works like an app</td></tr>
+</table>
+<p class="mut">Verify third-party details (Safaricom Daraja, Africa's Talking, speech and LLM providers, browser features) against current official documentation before implementing. Prices, fees and legal points are indicative and must be confirmed.</p>
+
+</main>
+</div>
+</body>
+</html>

@@ -1,0 +1,3 @@
+# Production services and secrets depend on the selected hosting provider.
+# Do not use the development Compose file for production.
+services: {}

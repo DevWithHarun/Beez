@@ -1,0 +1,19 @@
+spring:
+  config:
+    activate:
+      on-profile: sandbox
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/beez}
+    username: ${DATABASE_USERNAME:beez}
+    password: ${DATABASE_PASSWORD:beez-dev-only}
+  data:
+    redis:
+      url: ${REDIS_URL:redis://localhost:6379}
+
+beez:
+  auth:
+    refresh-cookie-secure: false
+    allowed-origins: ${WEB_ORIGIN:http://localhost:5173}
+  payment:
+    daraja:
+      base-url: ${MPESA_BASE_URL:https://sandbox.safaricom.co.ke}

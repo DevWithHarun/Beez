@@ -1,0 +1,83 @@
+spring:
+  application:
+    name: beez-backend
+  profiles:
+    default: dev
+  datasource:
+    url: ${DATABASE_URL:}
+    username: ${DATABASE_USERNAME:}
+    password: ${DATABASE_PASSWORD:}
+  data:
+    redis:
+      url: ${REDIS_URL:}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 11MB
+
+beez:
+  admin:
+    mfa-encryption-key: ${ADMIN_MFA_ENCRYPTION_KEY:}
+    bootstrap:
+      email: ${ADMIN_BOOTSTRAP_EMAIL:}
+      password: ${ADMIN_BOOTSTRAP_PASSWORD:}
+      totp-secret: ${ADMIN_BOOTSTRAP_TOTP_SECRET:}
+  basket:
+    rate-limit-secret: ${BASKET_TOKEN_SECRET:}
+    delivery:
+      base-fee-kes: ${DELIVERY_BASE_FEE_KES:100}
+      extra-stop-fee-kes: ${DELIVERY_EXTRA_SHOP_FEE_KES:40}
+      free-distance-km: ${DELIVERY_FREE_DISTANCE_KM:3}
+      per-additional-km-kes: ${DELIVERY_PER_KM_FEE_KES:20}
+  payment:
+    callback-poll-interval-ms: ${PAYMENT_CALLBACK_POLL_INTERVAL_MS:2000}
+    daraja:
+      base-url: ${MPESA_BASE_URL:https://sandbox.safaricom.co.ke}
+      business-short-code: ${MPESA_BUSINESS_SHORT_CODE:}
+      consumer-key: ${MPESA_CONSUMER_KEY:}
+      consumer-secret: ${MPESA_CONSUMER_SECRET:}
+      passkey: ${MPESA_PASSKEY:}
+      callback-url: ${MPESA_CALLBACK_URL:}
+      callback-token: ${MPESA_CALLBACK_TOKEN:}
+  auth:
+    jwt-issuer: ${JWT_ISSUER:https://api.beez.example}
+    jwt-audience: ${JWT_AUDIENCE:beez-pwa}
+    jwt-signing-key: ${JWT_SIGNING_KEY:}
+    otp-hmac-key: ${OTP_HMAC_KEY:}
+    refresh-cookie-secure: ${REFRESH_COOKIE_SECURE:true}
+    allowed-origins: ${WEB_ORIGIN:http://localhost:5173}
+  sms:
+    gateway:
+      primary-url: ${SMS_PRIMARY_API_URL:https://sms.blessedtexts.com/api/sms/v1/sendsms}
+      fallback-url: ${SMS_FALLBACK_API_URL:https://api.vaspro.co.ke/v3/BulkSMS/api/create}
+      api-key: ${SMS_API_KEY:}
+      sender-id: ${SMS_SENDER_ID:}
+      callback-url: ${SMS_CALLBACK_URL:}
+  voice:
+    openai:
+      api-key: ${OPENAI_API_KEY:}
+      base-url: ${OPENAI_BASE_URL:https://api.openai.com/v1}
+      transcription-model: ${OPENAI_TRANSCRIPTION_MODEL:gpt-4o-mini-transcribe}
+      extraction-model: ${OPENAI_PRODUCT_MODEL:gpt-4o-mini}
+  notifications:
+    order-alert-poll-interval-ms: ${ORDER_ALERT_POLL_INTERVAL_MS:5000}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+server:
+  port: ${SERVER_PORT:8080}

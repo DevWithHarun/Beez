@@ -1,0 +1,1 @@
+-- Demo seed data is not defined until the application schema is implemented.

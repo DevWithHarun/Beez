@@ -1,0 +1,18 @@
+{
+  "id": "/",
+  "name": "Beez",
+  "short_name": "Beez",
+  "description": "Beez helps small businesses grow.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fffdf7",
+  "theme_color": "#fffdf7",
+  "icons": [
+    {
+      "src": "/beez-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

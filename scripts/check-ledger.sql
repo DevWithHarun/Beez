@@ -1,0 +1,1 @@
+-- Ledger checks are not available until the wallet schema and invariants exist.

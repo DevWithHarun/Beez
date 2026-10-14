@@ -1,0 +1,13 @@
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+server:
+  error:
+    include-message: never
+
+beez:
+  auth:
+    refresh-cookie-secure: true
+    allowed-origins: ${WEB_ORIGIN}
