@@ -1,7 +1,36 @@
-modules = ["nodejs-20", "java-graalvm22.3", "web"]
+modules = ["java-graalvm22.3", "web", "nodejs-22"]
 
 [nix]
 channel = "stable-25_05"
+packages = ["jdk21", "maven", "redis"]
 
 [agent]
 expertMode = true
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Beez web"
+
+[[workflows.workflow]]
+name = "Beez web"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd web && npm run dev"
+waitForPort = 5000
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
+[[ports]]
+localPort = 5000
+externalPort = 80

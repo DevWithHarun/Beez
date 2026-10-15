@@ -8,6 +8,10 @@ export default defineConfig({
   plugins: [tailwindcss(), tanstackStart({ server: { entry: "server" } }), react()],
   resolve: { tsconfigPaths: true },
   server: {
+    host: "0.0.0.0",
+    port: 5000,
+    strictPort: true,
+    allowedHosts: true,
     proxy: {
       "/api": process.env["BEEZ_API_TARGET"] ?? "http://localhost:8080",
     },
