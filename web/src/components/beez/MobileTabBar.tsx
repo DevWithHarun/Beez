@@ -4,7 +4,7 @@ const tabs = [
   { label: "Discover", href: "/discover", icon: "/icons/discover.png" },
   { label: "Track", href: "/track", icon: "/icons/track.png" },
   { label: "Sell", href: APP_URL, icon: "/icons/sell.png" },
-  { label: "Delivery", href: APP_URL, icon: "/icons/delivery.png" },
+  { label: "Ride", href: APP_URL, icon: "/icons/delivery.png" },
 ];
 
 export default function MobileTabBar() {

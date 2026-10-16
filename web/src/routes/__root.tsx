@@ -117,7 +117,7 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   useEffect(() => {
-    if (!("serviceWorker" in navigator)) return;
+    if (import.meta.env.DEV || !("serviceWorker" in navigator)) return;
 
     void navigator.serviceWorker
       .register(serviceWorkerUrl, { type: "module" })

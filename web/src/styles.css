@@ -807,7 +807,7 @@ body:has(.admin-dashboard){min-width:0;}
 @media (max-width: 390px) {.hero{padding-right:18px;padding-left:18px;}.hero .tag{font-size:13px;}.hero h1{font-size:44px;letter-spacing:-1.4px;}.hero-button{padding:0 17px;font-size:15px;}.phone{transform:translateX(-50%) scale(0.94);transform-origin:top center;}.rider-badge{right:0;}}
 @media (prefers-reduced-motion: reduce) {.nav-cta,
   .hero-button{transition:none;}}
-.mobile-tab-bar{display:none;}
+@media (min-width: 701px) {.mobile-tab-bar{display:none;}}
 .offer-page,
 .vision-page,
 .features-page{scroll-margin-top:0;}
