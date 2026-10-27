@@ -1,0 +1,10 @@
+project_id = "rfppebrdhupqssqdnbeo"
+
+[functions.rider-mpesa-callback]
+verify_jwt = false
+
+[functions.send-sms-hook]
+verify_jwt = false
+
+[functions.voice-product]
+verify_jwt = true
