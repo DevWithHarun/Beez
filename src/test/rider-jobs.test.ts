@@ -5,6 +5,7 @@ import {
   normalizePlate,
   offerSecondsLeft,
   openOffers,
+  readyRiderOffers,
   riderNextStep,
   shiftDuration,
   todayTimeline,
@@ -13,6 +14,15 @@ import {
 } from "@/lib/rider-jobs";
 
 describe("job offers", () => {
+  it("only offers jobs that the shop marked ready", () => {
+    expect(
+      readyRiderOffers([
+        { id: "A", status: "Preparing" },
+        { id: "B", status: "Ready for Pickup" },
+      ]),
+    ).toEqual([{ id: "B", status: "Ready for Pickup" }]);
+  });
+
   it("each offer gives the rider 45 seconds", () => {
     expect(OFFER_SECONDS).toBe(45);
     expect(offerSecondsLeft(0, 0)).toBe(45);

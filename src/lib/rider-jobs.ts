@@ -5,6 +5,10 @@ export const OFFER_SECONDS = 45;
 
 export type OfferLike = { id: string };
 
+export function readyRiderOffers<T extends { status: string }>(orders: T[]) {
+  return orders.filter((order) => order.status === "Ready for Pickup");
+}
+
 /** Seconds left on an offer first shown at `firstSeenMs`. Never negative. */
 export function offerSecondsLeft(firstSeenMs: number, nowMs: number) {
   const left = OFFER_SECONDS - Math.floor((nowMs - firstSeenMs) / 1000);

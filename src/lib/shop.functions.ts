@@ -67,8 +67,8 @@ export const createCustomerOrder = createServerFn({ method: 'POST' })
       customer_area: data.address,
       items_summary: summary,
       total_kes: totalKes,
-      // Shop orders wait for the merchant to accept (2-minute window); others go straight to preparing.
-      status: primary.merchant_id ? 'Pending' : 'Preparing',
+      // Shop orders wait for the merchant; orders without a shop are ready immediately.
+      status: primary.merchant_id ? "Pending" : "Ready for Pickup",
       pickup_lat: pickup.lat,
       pickup_lng: pickup.lng,
       drop_lat: drop.lat,

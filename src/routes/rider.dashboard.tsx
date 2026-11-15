@@ -40,6 +40,7 @@ import {
   nairobiDay,
   newOfferIds,
   openOffers,
+  readyRiderOffers,
   shiftDuration,
   trackOfferSightings,
   walletLedger,
@@ -162,6 +163,7 @@ function App() {
   );
 
   // ----- Job offers: 45s each, chime + vibration on new ones -----
+  const readyAvailableOrders = readyRiderOffers(availableOrders);
   const offersEligible = !!rider?.online && !activeOrder;
   const [skipped, setSkipped] = useState<Set<string>>(() => new Set());
   useEffect(() => {
@@ -177,15 +179,20 @@ function App() {
   const seen = useMemo(() => {
     seenRef.current = trackOfferSightings(
       seenRef.current,
-      offersEligible ? availableOrders : [],
+      offersEligible ? readyAvailableOrders : [],
       Date.now(),
     );
     return seenRef.current;
-  }, [availableOrders, offersEligible]);
-  const now = useNow(offersEligible && availableOrders.length > 0, 1000);
+  }, [readyAvailableOrders, offersEligible]);
+  const now = useNow(offersEligible && readyAvailableOrders.length > 0, 1000);
   const slowNow = useNow(true, 30_000);
   const offers = offersEligible
-    ? openOffers(availableOrders as OfferOrder[], seen, skipped, Math.max(now, Date.now() - 1000))
+    ? openOffers(
+        readyAvailableOrders as OfferOrder[],
+        seen,
+        skipped,
+        Math.max(now, Date.now() - 1000),
+      )
     : [];
   const offerKey = offers.map((o) => o.offer.id).join(",");
   const chimed = useRef<Set<string>>(new Set());
