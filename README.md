@@ -162,9 +162,12 @@ VITE_SUPABASE_URL=<your-supabase-project-url>
 VITE_SUPABASE_PUBLISHABLE_KEY=<your-supabase-publishable-key>
 SUPABASE_URL=<your-supabase-project-url>
 SUPABASE_PUBLISHABLE_KEY=<your-supabase-publishable-key>
+HANDOVER_QR_SECRET=<random-server-only-signing-secret>
 ```
 
-Keep all keys out of source control. The `VITE_` variables are included in browser code and must contain only the publishable key, never a service-role or secret key. Server-only integrations use Supabase Edge Function secrets; frontend `.env` values are not automatically available to deployed functions.
+Generate `HANDOVER_QR_SECRET` with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` and configure it in the TanStack Start web app's server environment in production. Keep the same value across instances and deployments; changing it invalidates any currently displayed handover codes. This is not a Supabase Edge Function secret.
+
+Keep all keys out of source control. The `VITE_` variables are included in browser code and must contain only the publishable key, never a service-role or secret key. Server-only variables must be configured in the web app's server environment; frontend `.env` values are not automatically available to deployed functions.
 
 ### Commands
 
