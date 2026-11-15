@@ -76,7 +76,11 @@ function TrackOrder() {
   const lastSeen = order.rider_location_at
     ? new Date(order.rider_location_at).toLocaleTimeString("en-KE", { hour: "2-digit", minute: "2-digit" })
     : null;
-  const etaMinutes = route && order.status !== "Delivered" && order.status !== "Cancelled"
+  const etaMinutes =
+    route &&
+    !order.rider_arrived_at &&
+    order.status !== "Delivered" &&
+    order.status !== "Cancelled"
     ? minutesUntil(route.arrivalAt, now)
     : null;
 

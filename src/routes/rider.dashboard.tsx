@@ -29,6 +29,7 @@ import { requireWorkspace } from "@/lib/workspace-guard";
 import {
   acceptOrder,
   advanceOrderStatus,
+  markRiderArrived,
   setRiderOnline,
   useRiderDashboardHome,
   type DbOrder,
@@ -269,6 +270,20 @@ function App() {
     }
   };
 
+  const handleMarkArrived = async (order: DbOrder) => {
+    setWorkingOrder(order.id);
+    setActionError("");
+    try {
+      await markRiderArrived(order.id);
+      await refresh();
+      notify("The customer has been notified. Ask them to show their delivery QR.");
+    } catch (caught) {
+      fail(caught, "Your arrival could not be sent.");
+    } finally {
+      setWorkingOrder(null);
+    }
+  };
+
   const handleScanDone = (result: ScanResult) => {
     setScan(null);
     void refresh();
@@ -457,6 +472,7 @@ function App() {
                 working={workingOrder === activeOrder.id}
                 onScan={(kind) => setScan({ orderId: activeOrder.id, kind })}
                 onArriving={() => void handleArriving(activeOrder)}
+                onMarkArrived={() => void handleMarkArrived(activeOrder)}
               />
             ) : (
               <NoDelivery

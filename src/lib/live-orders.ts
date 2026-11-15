@@ -18,6 +18,7 @@ export type DbOrder = {
   rider_lng: number | null;
   rider_heading?: number | null;
   rider_location_at?: string | null;
+  rider_arrived_at?: string | null;
   delivery_fee_kes: number;
   payment_status: string;
   payment_method: string;
@@ -47,6 +48,29 @@ export function useMyOrders() {
   useEffect(() => {
     let cancelled = false;
     let channel: ReturnType<typeof supabase.channel> | undefined;
+    let poll: number | undefined;
+    let refreshWhenVisible: (() => void) | undefined;
+    let revision = 0;
+    let requestVersion = 0;
+
+    const fetchOrders = async (userId: string) => {
+      const request = ++requestVersion;
+      const currentRevision = revision;
+      const { data, error: ordersError } = await supabase
+        .from("orders")
+        .select("*")
+        .eq("customer_id", userId)
+        .order("created_at", { ascending: false });
+      if (cancelled || request !== requestVersion || currentRevision !== revision) return;
+      if (ordersError) {
+        console.error("Your orders could not be loaded.", ordersError);
+        setError("Your orders could not be loaded. Please try again.");
+      } else {
+        setOrders((data ?? []) as DbOrder[]);
+        setError(null);
+      }
+      setLoaded(true);
+    };
 
     const load = async () => {
       const {
@@ -67,21 +91,7 @@ export function useMyOrders() {
         return;
       }
       const userId = session.user.id;
-
-      const { data, error: ordersError } = await supabase
-        .from("orders")
-        .select("*")
-        .eq("customer_id", userId)
-        .order("created_at", { ascending: false });
-      if (cancelled) return;
-      if (ordersError) {
-        console.error("Your orders could not be loaded.", ordersError);
-        setError("Your orders could not be loaded. Please try again.");
-      } else {
-        setOrders((data ?? []) as DbOrder[]);
-        setError(null);
-      }
-      setLoaded(true);
+      void fetchOrders(userId);
 
       channel = supabase
         .channel(`customer-orders-${userId}`)
@@ -89,6 +99,7 @@ export function useMyOrders() {
           "postgres_changes",
           { event: "*", schema: "public", table: "orders", filter: `customer_id=eq.${userId}` },
           (payload) => {
+            revision += 1;
             setOrders((current) => {
               if (payload.eventType === "DELETE") {
                 return current.filter((order) => order.id !== (payload.old as { id: string }).id);
@@ -96,14 +107,32 @@ export function useMyOrders() {
               const row = payload.new as DbOrder;
               return [row, ...current.filter((order) => order.id !== row.id)];
             });
+            setError(null);
           },
         )
-        .subscribe();
+        .subscribe((status) => {
+          if (cancelled) return;
+          if (status === "SUBSCRIBED") {
+            if (poll) window.clearInterval(poll);
+            poll = undefined;
+            // Reconcile changes that may have landed between the initial query and subscription.
+            void fetchOrders(userId);
+          } else if (!poll) {
+            poll = window.setInterval(() => void fetchOrders(userId), 12_000);
+          }
+        });
+
+      refreshWhenVisible = () => {
+        if (document.visibilityState === "visible") void fetchOrders(userId);
+      };
+      document.addEventListener("visibilitychange", refreshWhenVisible);
     };
 
     void load();
     return () => {
       cancelled = true;
+      if (poll) window.clearInterval(poll);
+      if (refreshWhenVisible) document.removeEventListener("visibilitychange", refreshWhenVisible);
       if (channel) supabase.removeChannel(channel);
     };
   }, []);
@@ -121,14 +150,18 @@ export function useLiveOrder(id: string) {
   useEffect(() => {
     let cancelled = false;
     let poll: number | undefined;
+    let revision = 0;
+    let requestVersion = 0;
 
     const fetchOrder = async () => {
+      const request = ++requestVersion;
+      const currentRevision = revision;
       const { data, error: orderError } = await supabase
         .from("orders")
         .select("*")
         .eq("id", id)
         .maybeSingle();
-      if (cancelled) return;
+      if (cancelled || request !== requestVersion || currentRevision !== revision) return;
       if (orderError) {
         console.error("The order could not be refreshed.", orderError);
       } else {
@@ -140,7 +173,7 @@ export function useLiveOrder(id: string) {
         .select("id, order_id, status, created_at")
         .eq("order_id", id)
         .order("created_at", { ascending: true });
-      if (cancelled) return;
+      if (cancelled || request !== requestVersion || currentRevision !== revision) return;
       if (eventsError) {
         console.error("Order status history could not be refreshed.", eventsError);
       } else {
@@ -165,6 +198,7 @@ export function useLiveOrder(id: string) {
         "postgres_changes",
         { event: "*", schema: "public", table: "orders", filter: `id=eq.${id}` },
         (payload) => {
+          revision += 1;
           if (payload.eventType === "DELETE") {
             setOrder(null);
             return;
@@ -181,6 +215,7 @@ export function useLiveOrder(id: string) {
           filter: `order_id=eq.${id}`,
         },
         (payload) => {
+          revision += 1;
           const event = payload.new as OrderStatusEvent;
           setEvents((current) =>
             [...current.filter((item) => item.id !== event.id), event].sort((a, b) =>
@@ -195,15 +230,22 @@ export function useLiveOrder(id: string) {
         if (isConnected) {
           if (poll) window.clearInterval(poll);
           poll = undefined;
+          // Reconcile changes missed while the realtime channel was connecting or recovering.
+          void fetchOrder();
         } else {
           startPolling();
         }
       });
 
     void fetchOrder();
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") void fetchOrder();
+    };
+    document.addEventListener("visibilitychange", refreshWhenVisible);
     return () => {
       cancelled = true;
       if (poll) window.clearInterval(poll);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
       supabase.removeChannel(channel);
     };
   }, [id]);
@@ -499,6 +541,11 @@ export async function acceptOrder(orderId: string) {
 
 export async function advanceOrderStatus(orderId: string) {
   const { error } = await supabase.rpc("advance_order_status", { order_id: orderId });
+  if (error) throw new Error(error.message);
+}
+
+export async function markRiderArrived(orderId: string) {
+  const { error } = await supabase.rpc("rider_mark_arrived", { _order_id: orderId });
   if (error) throw new Error(error.message);
 }
 

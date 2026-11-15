@@ -51,10 +51,11 @@ export type NextStep =
   | { kind: "scan"; handover: "pickup"; label: string; hint: string }
   | { kind: "scan"; handover: "dropoff"; label: string; hint: string }
   | { kind: "arriving"; label: string; hint: string }
+  | { kind: "arrived"; label: string; hint: string }
   | null;
 
 /** What the rider does next on an active delivery. */
-export function riderNextStep(status: string): NextStep {
+export function riderNextStep(status: string, riderArrivedAt?: string | null): NextStep {
   if (status === "Assigned")
     return {
       kind: "scan",
@@ -67,6 +68,12 @@ export function riderNextStep(status: string): NextStep {
       kind: "arriving",
       label: "I'm arriving",
       hint: "Tap when you're close so the customer gets ready.",
+    };
+  if (status === "Out for Delivery" && !riderArrivedAt)
+    return {
+      kind: "arrived",
+      label: "I've arrived",
+      hint: "Mark arrival to alert the customer and unlock the delivery QR.",
     };
   if (status === "Out for Delivery")
     return {

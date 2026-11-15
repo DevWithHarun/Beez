@@ -94,6 +94,7 @@ export function stageHeadline(o: {
   merchant_name: string;
   merchant_response?: string | null;
   riderName?: string | null;
+  riderArrivedAt?: string | null;
 }) {
   const shop = o.merchant_name || "The shop";
   const rider = o.riderName?.trim() || "Your rider";
@@ -109,7 +110,7 @@ export function stageHeadline(o: {
     case "In Transit":
       return `${rider} picked up your order`;
     case "Out for Delivery":
-      return `${rider} is on the way to you`;
+      return o.riderArrivedAt ? `${rider} has arrived` : `${rider} is on the way to you`;
     case "Delivered":
       return "Delivered — enjoy!";
     case "Cancelled":

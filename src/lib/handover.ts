@@ -40,13 +40,19 @@ export function normalizeShortCode(input: string) {
 /** Which handover the rider must complete next for an order status, if any. */
 export function expectedHandoverKind(status: string): HandoverKind | null {
   if (status === "Assigned") return "pickup";
-  if (status === "In Transit" || status === "Out for Delivery") return "dropoff";
+  if (status === "Out for Delivery") return "dropoff";
   return null;
 }
 
 /** Whether the shop (pickup) or the customer (drop-off) may show their code now. */
-export function canShowHandover(kind: HandoverKind, status: string) {
-  return kind === "pickup" ? status === "Assigned" : status === "In Transit" || status === "Out for Delivery";
+export function canShowHandover(
+  kind: HandoverKind,
+  status: string,
+  riderArrivedAt?: string | null,
+) {
+  return kind === "pickup"
+    ? status === "Assigned"
+    : !!riderArrivedAt && status === "Out for Delivery";
 }
 
 /** Constant-time string compare (equal lengths only). */

@@ -38,12 +38,14 @@ describe("handover codes", () => {
 
   it("pickup is scanned at the shop, drop-off at the customer", () => {
     expect(expectedHandoverKind("Assigned")).toBe("pickup");
-    expect(expectedHandoverKind("In Transit")).toBe("dropoff");
+    expect(expectedHandoverKind("In Transit")).toBeNull();
     expect(expectedHandoverKind("Out for Delivery")).toBe("dropoff");
     expect(expectedHandoverKind("Delivered")).toBeNull();
     expect(canShowHandover("pickup", "Assigned")).toBe(true);
     expect(canShowHandover("pickup", "In Transit")).toBe(false);
     expect(canShowHandover("dropoff", "Assigned")).toBe(false);
-    expect(canShowHandover("dropoff", "Out for Delivery")).toBe(true);
+    expect(canShowHandover("dropoff", "Out for Delivery")).toBe(false);
+    expect(canShowHandover("dropoff", "Out for Delivery", "2026-11-15T10:00:00Z")).toBe(true);
+    expect(canShowHandover("dropoff", "In Transit", "2026-11-15T10:00:00Z")).toBe(false);
   });
 });

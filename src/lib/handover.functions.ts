@@ -38,7 +38,9 @@ export const getHandoverCode = createServerFn({ method: "POST" })
     // RLS: the caller only sees orders they're the shopper, shop or rider for.
     const { data: order } = await context.supabase
       .from("orders")
-      .select("id, status, customer_id, merchant_id, rider_id")
+      .select(
+        "id, status, customer_id, merchant_id, rider_id, rider_arrived_at",
+      )
       .eq("id", data.orderId)
       .maybeSingle();
     if (!order) throw new Error("Order not found.");
@@ -52,7 +54,7 @@ export const getHandoverCode = createServerFn({ method: "POST" })
         .maybeSingle();
       if (!shop) throw new Error("Only the shop can show the pickup code.");
     }
-    if (!order.rider_id || !canShowHandover(data.kind, order.status)) {
+    if (!order.rider_id || !canShowHandover(data.kind, order.status, order.rider_arrived_at)) {
       return { ready: false as const, status: order.status };
     }
 
@@ -98,12 +100,15 @@ export const verifyHandover = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: order } = await context.supabase
       .from("orders")
-      .select("id, status, rider_id")
+      .select("id, status, rider_id, rider_arrived_at")
       .eq("id", data.orderId)
       .maybeSingle();
     if (!order || order.rider_id !== context.userId) throw new Error("This is not your delivery.");
     const kind: HandoverKind | null = expectedHandoverKind(order.status);
     if (!kind) throw new Error("This delivery doesn't need a code right now.");
+    if (kind === "dropoff" && !order.rider_arrived_at) {
+      throw new Error("Ask the rider to mark their arrival before confirming delivery.");
+    }
     const who = kind === "pickup" ? "the shop" : "the customer";
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");

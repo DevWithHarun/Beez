@@ -767,6 +767,7 @@ export type Database = {
           pickup_lat: number
           pickup_lng: number
           rider_earning_kes: number
+          rider_arrived_at: string | null
           rider_heading: number | null
           rider_id: string | null
           rider_lat: number | null
@@ -806,6 +807,7 @@ export type Database = {
           pickup_lat: number
           pickup_lng: number
           rider_earning_kes?: number
+          rider_arrived_at?: string | null
           rider_heading?: number | null
           rider_id?: string | null
           rider_lat?: number | null
@@ -845,6 +847,7 @@ export type Database = {
           pickup_lat?: number
           pickup_lng?: number
           rider_earning_kes?: number
+          rider_arrived_at?: string | null
           rider_heading?: number | null
           rider_id?: string | null
           rider_lat?: number | null
@@ -1719,6 +1722,7 @@ export type Database = {
         }
         Returns: string
       }
+      rider_mark_arrived: { Args: { _order_id: string }; Returns: string }
       rider_request_mpesa_payout: {
         Args: { _amount_kes: number; _idempotency_key: string }
         Returns: string

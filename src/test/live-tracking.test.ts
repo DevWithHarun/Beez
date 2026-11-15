@@ -12,6 +12,7 @@ import {
   routeWaypoints,
   shouldRefetchRoute,
   shouldSendPing,
+  stageHeadline,
   trackingStep,
 } from "@/lib/live-tracking";
 
@@ -52,6 +53,14 @@ describe("tracking stages", () => {
     expect(trackingStep("Out for Delivery")).toBe(3);
     expect(trackingStep("Delivered")).toBe(4);
     expect(trackingStep("Cancelled")).toBe(-1);
+  });
+
+  it("shows arrival instead of an outdated moving-to-customer headline", () => {
+    const order = { status: "Out for Delivery", merchant_name: "Shop" };
+    expect(stageHeadline(order)).toBe("Your rider is on the way to you");
+    expect(stageHeadline({ ...order, riderArrivedAt: "2026-11-15T10:00:00Z" })).toBe(
+      "Your rider has arrived",
+    );
   });
 
   it("routes via the shop before pickup and straight home after", () => {

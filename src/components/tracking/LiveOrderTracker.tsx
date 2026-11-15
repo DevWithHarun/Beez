@@ -72,7 +72,7 @@ export function LiveOrderTracker({ order, rider, etaMinutes, freshness, lastSeen
       <header className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h1 className="text-lg font-bold leading-snug text-foreground">
-            {stageHeadline({ ...order, riderName })}
+            {stageHeadline({ ...order, riderName, riderArrivedAt: order.rider_arrived_at })}
           </h1>
           {!done && (
             <p className="mt-1 flex items-center gap-2 text-xs text-muted-foreground" role="status">
@@ -89,12 +89,15 @@ export function LiveOrderTracker({ order, rider, etaMinutes, freshness, lastSeen
       </header>
 
       <ol className="track-steps" aria-label="Order progress">
-        {TRACKING_STEPS.map((label, i) => (
-          <li key={label} data-state={i < step ? "done" : i === step ? "current" : "todo"}>
-            <i />
-            <span>{label}</span>
-          </li>
-        ))}
+        {TRACKING_STEPS.map((label, i) => {
+          const displayLabel = i === 3 && order.rider_arrived_at ? "Arrived" : label;
+          return (
+            <li key={label} data-state={i < step ? "done" : i === step ? "current" : "todo"}>
+              <i />
+              <span>{displayLabel}</span>
+            </li>
+          );
+        })}
       </ol>
 
       <ShopResponseNotice order={order} />
@@ -123,12 +126,34 @@ export function LiveOrderTracker({ order, rider, etaMinutes, freshness, lastSeen
         </div>
       )}
 
-      {order.rider_id && canShowHandover("dropoff", order.status) && (
+      {order.rider_id &&
+        !done &&
+        !order.rider_arrived_at &&
+        ["In Transit", "Out for Delivery"].includes(order.status) && (
+          <div className="track-card mt-4" role="status">
+            Your delivery QR will be available when your rider marks their arrival.
+          </div>
+        )}
+
+      {order.rider_arrived_at && !done && (
+        <div className="track-card mt-4" role="status">
+          <p className="font-semibold text-foreground">Your rider marked their arrival.</p>
+          {order.payment_method === "Cash on Delivery" && order.payment_status !== "Paid" && (
+            <p className="mt-1 text-sm text-muted-foreground">
+              Pay KSh {order.total_kes.toLocaleString()} in cash, then show your delivery QR to
+              confirm.
+            </p>
+          )}
+        </div>
+      )}
+
+      {order.rider_id && canShowHandover("dropoff", order.status, order.rider_arrived_at) && (
         <HandoverCodeButton
           className="track-cta mt-4 w-full gap-2"
           orderId={order.id}
           kind="dropoff"
           status={order.status}
+          arrivedAt={order.rider_arrived_at}
           label="Show delivery QR to your rider"
         />
       )}

@@ -1,5 +1,5 @@
 // The rider's active delivery: where to go now, how to get there, and the one
-// thing to do next (scan the shop's QR, tap arriving, scan the customer's QR).
+// next action (pickup scan, mark arrival, or delivery scan).
 import { ArrowRight, Check, CloudOff, MapPin, Navigation, QrCode, Store } from "lucide-react";
 import type { DbOrder } from "@/lib/live-orders";
 import { riderNextStep } from "@/lib/rider-jobs";
@@ -20,14 +20,16 @@ export function DeliveryNavigator({
   working,
   onScan,
   onArriving,
+  onMarkArrived,
 }: {
   order: DbOrder;
   pendingScan: boolean;
   working: boolean;
   onScan: (kind: HandoverKind) => void;
   onArriving: () => void;
+  onMarkArrived: () => void;
 }) {
-  const next = riderNextStep(order.status);
+  const next = riderNextStep(order.status, order.rider_arrived_at);
   const toShop = order.status === "Assigned";
   const stepIndex = STEPS.findIndex((s) => s.status === order.status);
   const cash = order.payment_method === "Cash on Delivery" && order.payment_status !== "Paid";
@@ -49,7 +51,9 @@ export function DeliveryNavigator({
               data-state={i < stepIndex ? "done" : i === stepIndex ? "current" : "todo"}
             >
               <i>{i < stepIndex ? <Check size={11} /> : null}</i>
-              <span>{s.label}</span>
+              <span>
+                {s.status === "Out for Delivery" && order.rider_arrived_at ? "Arrived" : s.label}
+              </span>
             </li>
           ))}
         </ol>
@@ -110,14 +114,24 @@ export function DeliveryNavigator({
             <button
               className="yellow nav-cta"
               disabled={working}
-              onClick={() => (next.kind === "scan" ? onScan(next.handover) : onArriving())}
+              onClick={() => {
+                if (next.kind === "scan") onScan(next.handover);
+                else if (next.kind === "arrived") onMarkArrived();
+                else onArriving();
+              }}
             >
-              {next.kind === "scan" ? <QrCode size={18} /> : <ArrowRight size={18} />}
+              {next.kind === "scan" ? (
+                <QrCode size={18} />
+              ) : next.kind === "arrived" ? (
+                <MapPin size={18} />
+              ) : (
+                <ArrowRight size={18} />
+              )}
               {working ? "Updating…" : next.label}
             </button>
             {next.kind === "arriving" && (
-              <button className="nav-secondary" onClick={() => onScan("dropoff")}>
-                <QrCode size={15} /> Already there? Scan the customer's QR
+              <button className="nav-secondary" disabled={working} onClick={onMarkArrived}>
+                <MapPin size={15} /> Already there? Mark arrived
               </button>
             )}
           </>

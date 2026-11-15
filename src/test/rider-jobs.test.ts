@@ -48,7 +48,11 @@ describe("next delivery step", () => {
   it("pickup and drop-off need a scan; in between the rider taps arriving", () => {
     expect(riderNextStep("Assigned")).toMatchObject({ kind: "scan", handover: "pickup" });
     expect(riderNextStep("In Transit")).toMatchObject({ kind: "arriving" });
-    expect(riderNextStep("Out for Delivery")).toMatchObject({ kind: "scan", handover: "dropoff" });
+    expect(riderNextStep("Out for Delivery")).toMatchObject({ kind: "arrived" });
+    expect(riderNextStep("Out for Delivery", "2026-11-15T10:00:00Z")).toMatchObject({
+      kind: "scan",
+      handover: "dropoff",
+    });
     expect(riderNextStep("Delivered")).toBeNull();
   });
 });

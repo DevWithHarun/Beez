@@ -20,6 +20,7 @@ type Props = {
   orderId: string;
   kind: HandoverKind;
   status: string;
+  arrivedAt?: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
@@ -30,14 +31,21 @@ type CodeState =
   | { kind: "waiting" }
   | { kind: "error"; message: string };
 
-export function HandoverCodeDialog({ orderId, kind, status, open, onOpenChange }: Props) {
+export function HandoverCodeDialog({
+  orderId,
+  kind,
+  status,
+  arrivedAt,
+  open,
+  onOpenChange,
+}: Props) {
   const fetchCode = useServerFn(getHandoverCode);
   const [state, setState] = useState<CodeState>({ kind: "loading" });
   const done =
     kind === "pickup"
       ? ["In Transit", "Out for Delivery", "Delivered"].includes(status)
       : status === "Delivered";
-  const showable = canShowHandover(kind, status);
+  const showable = canShowHandover(kind, status, arrivedAt);
 
   const load = useCallback(async () => {
     setState({ kind: "loading" });
@@ -87,7 +95,7 @@ export function HandoverCodeDialog({ orderId, kind, status, open, onOpenChange }
           <p className="py-6 text-center text-sm text-muted-foreground" role="status">
             {kind === "pickup"
               ? "The code appears once a rider has taken this job."
-              : "The code appears once the rider has picked up your order."}
+              : "The code appears once the rider marks their arrival."}
           </p>
         ) : state.kind === "loading" ? (
           <p
@@ -143,12 +151,14 @@ export function HandoverCodeButton({
   orderId,
   kind,
   status,
+  arrivedAt,
   className,
   label,
 }: {
   orderId: string;
   kind: HandoverKind;
   status: string;
+  arrivedAt?: string | null;
   className?: string;
   label?: string;
 }) {
@@ -163,6 +173,7 @@ export function HandoverCodeButton({
         orderId={orderId}
         kind={kind}
         status={status}
+        arrivedAt={arrivedAt}
         open={open}
         onOpenChange={setOpen}
       />
