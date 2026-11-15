@@ -1,0 +1,1 @@
+-- This historical migration is intentionally a no-op. Preserve all existing orders.
